@@ -1,0 +1,18 @@
+{
+  "name": "school-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single-campus School Management System. The backend lives in server/.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm --prefix server ci && npm --prefix server run build",
+    "start": "npm --prefix server start",
+    "dev": "npm --prefix server run dev",
+    "test": "npm --prefix server test",
+    "typecheck": "npm --prefix server run typecheck",
+    "migrate": "npm --prefix server run migrate:up",
+    "seed": "npm --prefix server run seed"
+  }
+}

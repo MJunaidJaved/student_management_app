@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# Holds a live database credential and both signing secrets.
+.env
+.env.*
+!.env.example
+
+# Uploaded student and staff documents: personal data, never committed.
+var/
+coverage/
+*.log
