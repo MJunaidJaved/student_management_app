@@ -83,7 +83,7 @@ export class SettingsService {
    * Defaults are merged in so a client sees the value actually in force rather
    * than only the rows somebody has explicitly saved.
    */
-  async list(actor: Actor): Promise<Record<string, SettingView[]>> {
+  async list(_actor: Actor): Promise<Record<string, SettingView[]>> {
     const stored = await this.all();
 
     const grouped: Record<string, SettingView[]> = {};

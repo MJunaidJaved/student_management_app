@@ -11,7 +11,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from 'express';
 import type { RouteDeclaration } from '../../core/http/route-registry';
-import { validate, validated, text } from '../../core/http/validate';
+import { validated, text } from '../../core/http/validate';
 import { ok } from '../../core/http/envelope';
 import { getRequestId, getContext } from '../../core/http/request-context';
 import { currentUser } from '../../core/http/authenticate';

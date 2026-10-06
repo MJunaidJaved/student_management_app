@@ -18,7 +18,6 @@ import {
   clampLimit,
   decodeCursor,
   encodeCursor,
-  type SortDirection,
 } from '../../core/db/query-builder';
 import type { PageMeta } from '../../core/http/envelope';
 
@@ -61,7 +60,6 @@ export class AuditService {
     filters: AuditFilters,
   ): Promise<{ entries: AuditEntry[]; page: PageMeta }> {
     const limit = clampLimit(filters.limit);
-    const direction: SortDirection = 'desc';
 
     return readTransaction(actor, async (uow) => {
       const where = new ConditionBuilder();
