@@ -16,6 +16,8 @@
  * Run: SUPER_ADMIN_USERNAME=admin npx tsx scripts/seed-super-admin.ts
  */
 
+import { writeFileSync } from 'node:fs';
+import * as path from 'node:path';
 import { SYSTEM_ACTOR, transaction } from '../src/core/db/uow';
 import { closePool } from '../src/core/db/pool';
 import {
@@ -24,6 +26,9 @@ import {
   hashPassword,
 } from '../src/core/auth/password';
 import { SUPER_ADMIN_ROLE } from '../src/core/authz/default-roles';
+
+const PASSWORD_FILE_NAME = '.admin-initial-password';
+const PASSWORD_FILE = path.join(__dirname, '..', PASSWORD_FILE_NAME);
 
 async function main(): Promise<void> {
   const username = (process.env.SUPER_ADMIN_USERNAME ?? 'admin').trim().toLowerCase();
@@ -91,15 +96,20 @@ async function main(): Promise<void> {
   }
 
   console.log(`Created Super Admin "${username}" (id ${result.id}).`);
-  console.log('The account must change its password at first login.\n');
+  console.log('The account must change its password at first login.');
   if (supplied) {
     console.log('Password: taken from SUPER_ADMIN_PASSWORD.');
-  } else {
-    // The only time this value is ever displayed.
-    console.log(`Temporary password: ${password}`);
-    console.log('Shown once and not stored anywhere. Copy it now.');
+    return;
   }
+  // The generated password goes to a gitignored file, never to the console or
+  // a log. 'wx' refuses to overwrite an earlier file; mode 0600 keeps other
+  // local users out.
+  writeFileSync(PASSWORD_FILE, password + '\n', { flag: 'wx', mode: 0o600 });
+  console.log(`Initial password written to ${PASSWORD_FILE_NAME} (not printed).`);
+  console.log('Read it once, sign in, change it, then delete that file.');
 }
+
+
 
 main()
   .then(async () => {

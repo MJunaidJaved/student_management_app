@@ -22,7 +22,8 @@
     "migrate:status": "tsx scripts/migrate.ts status",
     "migrate:mark-baseline": "tsx scripts/migrate.ts --mark-baseline",
     "schema:baseline": "tsx scripts/dump-baseline.ts",
-    "schema:verify-baseline": "tsx scripts/verify-baseline.ts"
+    "schema:verify-baseline": "tsx scripts/verify-baseline.ts",
+    "seed:admin": "tsx scripts/seed-super-admin.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

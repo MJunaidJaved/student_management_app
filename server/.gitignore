@@ -10,3 +10,4 @@ dist/
 var/
 coverage/
 *.log
+.admin-initial-password

@@ -14,6 +14,8 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 30_000,
     include: ['src/**/*.test.ts'],
+    // Runs once before any file. Stops the suite if live records are present.
+    globalSetup: ['src/core/testing/refuse-real-data.ts'],
     env: {
       NODE_ENV: 'test',
     },
