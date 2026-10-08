@@ -37,6 +37,12 @@ import {
   TermRepository,
 } from './modules/academic/academic.repository';
 import { AcademicService } from './modules/academic/academic.service';
+import {
+  EnrollmentRepository,
+  GuardianRepository,
+  StudentRepository,
+} from './modules/students/students.repository';
+import { StudentsService } from './modules/students/students.service';
 
 export type Container = {
   cache: CacheStore;
@@ -53,6 +59,9 @@ export type Container = {
     auth: AuthRepository;
     roles: RolesRepository;
     sections: SectionRepository;
+    students: StudentRepository;
+    guardians: GuardianRepository;
+    enrollments: EnrollmentRepository;
   };
   services: {
     auth: AuthService;
@@ -60,6 +69,7 @@ export type Container = {
     settings: SettingsService;
     audit: AuditService;
     academic: AcademicService;
+    students: StudentsService;
   };
 };
 
@@ -95,21 +105,33 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const subjectTeachers = new SubjectTeacherRepository();
   const rooms = new RoomRepository();
 
+  const studentsRepo = new StudentRepository();
+  const guardiansRepo = new GuardianRepository();
+  const enrollmentsRepo = new EnrollmentRepository();
+
+  const studentPolicy = new StudentPolicy(cache, permissions);
+  const sectionPolicy = new SectionPolicy(cache, permissions);
+  const staffPolicy = new StaffPolicy(cache, permissions);
+  const userPolicy = new UserPolicy(cache, permissions);
+
   return {
     cache,
     rateLimiter,
     denylist,
     permissions,
     policies: {
-      student: new StudentPolicy(cache, permissions),
-      section: new SectionPolicy(cache, permissions),
-      staff: new StaffPolicy(cache, permissions),
-      user: new UserPolicy(cache, permissions),
+      student: studentPolicy,
+      section: sectionPolicy,
+      staff: staffPolicy,
+      user: userPolicy,
     },
     repositories: {
       auth: authRepository,
       roles: rolesRepository,
       sections,
+      students: studentsRepo,
+      guardians: guardiansRepo,
+      enrollments: enrollmentsRepo,
     },
     services: {
       auth: new AuthService(authRepository, permissions, denylist),
@@ -126,6 +148,14 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         subjectTeachers,
         rooms,
         cache,
+      ),
+      students: new StudentsService(
+        studentsRepo,
+        guardiansRepo,
+        enrollmentsRepo,
+        sections,
+        studentPolicy,
+        permissions,
       ),
     },
   };

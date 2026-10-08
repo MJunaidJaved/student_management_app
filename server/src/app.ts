@@ -31,6 +31,7 @@ import { permissionRoutes, roleRoutes } from './modules/roles/roles.routes';
 import { settingsRoutes } from './modules/settings/settings.routes';
 import { auditRoutes as auditLogRoutes } from './modules/audit/audit.routes';
 import { academicRoutes } from './modules/academic/academic.routes';
+import { studentRoutes } from './modules/students/students.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -116,6 +117,7 @@ export function createApp(container: Container): Express {
   mount('/settings', settingsRoutes(container.services.settings));
   mount('/audit-logs', auditLogRoutes(container.services.audit));
   mount('/academic', academicRoutes(container.services.academic));
+  mount('', studentRoutes(container.services.students));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {
