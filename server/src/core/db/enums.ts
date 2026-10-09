@@ -65,6 +65,30 @@ export const LEAVE_APPLICANT_TYPES = ['student', 'staff'] as const;
 /** `leave_types.applies_to` */
 export const LEAVE_APPLIES_TO = ['student', 'staff', 'both'] as const;
 
+/** `fee_categories.frequency` */
+export const FEE_FREQUENCIES = ['monthly', 'termly', 'yearly', 'one_time'] as const;
+
+/** `fee_invoices.status` — unpaid/partial/paid are set only by `recompute_invoice()`; the app sets only `cancelled`. */
+export const FEE_INVOICE_STATUSES = ['unpaid', 'partial', 'paid', 'cancelled'] as const;
+
+/** `discounts.type` */
+export const DISCOUNT_TYPES = ['percent', 'fixed'] as const;
+
+/** `payments.method` */
+export const PAYMENT_METHODS = ['cash', 'bank', 'online', 'cheque'] as const;
+
+/** `payments.status` */
+export const PAYMENT_STATUSES = ['valid', 'reversed'] as const;
+
+/** `account_heads.type` */
+export const ACCOUNT_HEAD_TYPES = ['asset', 'liability', 'income', 'expense', 'equity'] as const;
+
+/** `vouchers.type` */
+export const VOUCHER_TYPES = ['receipt', 'payment', 'journal'] as const;
+
+/** `vouchers.status` */
+export const VOUCHER_STATUSES = ['draft', 'posted'] as const;
+
 export type Gender = (typeof GENDERS)[number];
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];

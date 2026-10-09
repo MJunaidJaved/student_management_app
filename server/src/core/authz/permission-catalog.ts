@@ -218,6 +218,15 @@ const substitutions = define('substitutions', [
   ['manage', 'Assign and cancel teacher substitutions', true],
 ]);
 
+/* ---------------- Module 10: accounting ---------------- */
+
+const accounting = define('accounting', [
+  ['read', 'View account heads, bank accounts, vouchers and ledger reports'],
+  ['manage_heads', 'Create and edit account heads and bank accounts'],
+  ['manage_vouchers', 'Create a draft journal voucher'],
+  ['post', 'Post a draft voucher, freezing it', true],
+]);
+
 /** Every permission in the system. */
 export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...users, ...roles, ...permissions, ...audit, ...settings,
@@ -226,6 +235,7 @@ export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...attendance, ...leave,
   ...fees,
   ...timetable, ...substitutions,
+  ...accounting,
   ...exams,
   ...staff,
 ];

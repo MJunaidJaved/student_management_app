@@ -58,6 +58,24 @@ import { PeriodRepository, TimetableEntryRepository, SubstitutionRepository } fr
 import { TimetableService } from './modules/timetable/timetable.service';
 import { NotificationRepository, NotificationLogRepository } from './modules/notifications/notifications.repository';
 import { NotificationService } from './modules/notifications/notifications.service';
+import {
+  FeeCategoryRepository,
+  FeeStructureRepository,
+  DiscountRepository,
+  StudentDiscountRepository,
+  FeeInvoiceRepository,
+  FeeInvoiceItemRepository,
+  PaymentRepository,
+  PaymentAllocationRepository,
+} from './modules/fees/fees.repository';
+import { FeesService } from './modules/fees/fees.service';
+import {
+  AccountHeadRepository,
+  BankAccountRepository,
+  VoucherRepository,
+  VoucherEntryRepository,
+} from './modules/accounting/accounting.repository';
+import { AccountingService } from './modules/accounting/accounting.service';
 
 export type Container = {
   cache: CacheStore;
@@ -91,6 +109,18 @@ export type Container = {
     substitutions: SubstitutionRepository;
     notifications: NotificationRepository;
     notificationLogs: NotificationLogRepository;
+    feeCategories: FeeCategoryRepository;
+    feeStructures: FeeStructureRepository;
+    discounts: DiscountRepository;
+    studentDiscounts: StudentDiscountRepository;
+    feeInvoices: FeeInvoiceRepository;
+    feeInvoiceItems: FeeInvoiceItemRepository;
+    payments: PaymentRepository;
+    paymentAllocations: PaymentAllocationRepository;
+    accountHeads: AccountHeadRepository;
+    bankAccounts: BankAccountRepository;
+    vouchers: VoucherRepository;
+    voucherEntries: VoucherEntryRepository;
   };
   services: {
     auth: AuthService;
@@ -104,6 +134,8 @@ export type Container = {
     leave: LeaveService;
     timetable: TimetableService;
     notifications: NotificationService;
+    fees: FeesService;
+    accounting: AccountingService;
   };
 };
 
@@ -116,10 +148,16 @@ export type ContainerOptions = {
    * bug. Neither is what the test is checking.
    */
   forTests?: boolean;
+  /**
+   * Override the cache implementation independent of `forTests`. For a test
+   * that exercises cache-backed behaviour directly (payment idempotency is
+   * the one case so far) while still wanting the rate limiter off.
+   */
+  cache?: CacheStore;
 };
 
 export function buildContainer(options: ContainerOptions = {}): Container {
-  const cache: CacheStore = options.forTests ? new NullCacheStore() : new InProcessCacheStore();
+  const cache: CacheStore = options.cache ?? (options.forTests ? new NullCacheStore() : new InProcessCacheStore());
   const rateLimiter: RateLimiterStore = options.forTests
     ? new NullRateLimiterStore()
     : new InProcessRateLimiterStore();
@@ -159,6 +197,20 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const notificationLogsRepo = new NotificationLogRepository();
   const notificationService = new NotificationService(notificationsRepo, notificationLogsRepo);
 
+  const feeCategoriesRepo = new FeeCategoryRepository();
+  const feeStructuresRepo = new FeeStructureRepository();
+  const discountsRepo = new DiscountRepository();
+  const studentDiscountsRepo = new StudentDiscountRepository();
+  const feeInvoicesRepo = new FeeInvoiceRepository();
+  const feeInvoiceItemsRepo = new FeeInvoiceItemRepository();
+  const paymentsRepo = new PaymentRepository();
+  const paymentAllocationsRepo = new PaymentAllocationRepository();
+  const accountHeadsRepo = new AccountHeadRepository();
+  const bankAccountsRepo = new BankAccountRepository();
+  const vouchersRepo = new VoucherRepository();
+  const voucherEntriesRepo = new VoucherEntryRepository();
+  const accountingService = new AccountingService(accountHeadsRepo, bankAccountsRepo, vouchersRepo, voucherEntriesRepo);
+
   const studentPolicy = new StudentPolicy(cache, permissions);
   const sectionPolicy = new SectionPolicy(cache, permissions);
   const staffPolicy = new StaffPolicy(cache, permissions);
@@ -196,6 +248,18 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       substitutions: substitutionsRepo,
       notifications: notificationsRepo,
       notificationLogs: notificationLogsRepo,
+      feeCategories: feeCategoriesRepo,
+      feeStructures: feeStructuresRepo,
+      discounts: discountsRepo,
+      studentDiscounts: studentDiscountsRepo,
+      feeInvoices: feeInvoicesRepo,
+      feeInvoiceItems: feeInvoiceItemsRepo,
+      payments: paymentsRepo,
+      paymentAllocations: paymentAllocationsRepo,
+      accountHeads: accountHeadsRepo,
+      bankAccounts: bankAccountsRepo,
+      vouchers: vouchersRepo,
+      voucherEntries: voucherEntriesRepo,
     },
     services: {
       auth: new AuthService(authRepository, permissions, denylist),
@@ -255,6 +319,22 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         notificationService,
       ),
       notifications: notificationService,
+      fees: new FeesService(
+        feeCategoriesRepo,
+        feeStructuresRepo,
+        discountsRepo,
+        studentDiscountsRepo,
+        feeInvoicesRepo,
+        feeInvoiceItemsRepo,
+        paymentsRepo,
+        paymentAllocationsRepo,
+        enrollmentsRepo,
+        studentPolicy,
+        permissions,
+        accountingService,
+        cache,
+      ),
+      accounting: accountingService,
     },
   };
 }

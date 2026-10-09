@@ -37,6 +37,8 @@ import { attendanceRoutes } from './modules/attendance/attendance.routes';
 import { leaveRoutes } from './modules/leave/leave.routes';
 import { timetableRoutes } from './modules/timetable/timetable.routes';
 import { notificationRoutes } from './modules/notifications/notifications.routes';
+import { feesRoutes } from './modules/fees/fees.routes';
+import { accountingRoutes } from './modules/accounting/accounting.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -128,6 +130,8 @@ export function createApp(container: Container): Express {
   mount('', leaveRoutes(container.services.leave));
   mount('', timetableRoutes(container.services.timetable));
   mount('', notificationRoutes(container.services.notifications));
+  mount('', feesRoutes(container.services.fees));
+  mount('', accountingRoutes(container.services.accounting));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {

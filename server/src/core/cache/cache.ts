@@ -35,6 +35,8 @@ export const CACHE_TTL_MS = {
   reference: 10 * 60_000,
   /** A teacher's assigned sections and subjects; drives the policy layer. */
   'teacher-scope': 2 * 60_000,
+  /** Idempotency keys for money-creating requests (Part 5.7). Lost on restart — documented, not hidden. */
+  'payment-idempotency': 10 * 60_000,
 } as const;
 
 export type CacheNamespace = keyof typeof CACHE_TTL_MS;
