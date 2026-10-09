@@ -80,7 +80,12 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await transaction(SYSTEM_ACTOR, async (uow) => {
-    // Delete in reverse order
+    // student_guardians and student_enrollments both RESTRICT the parent
+    // rows below; they have to go first or the guardian/student deletes fail.
+    for (const id of made.students) {
+      await uow.count(`DELETE FROM student_guardians WHERE student_id = $1`, [id]);
+      await uow.count(`DELETE FROM student_enrollments WHERE student_id = $1`, [id]);
+    }
     for (const id of made.guardians) await uow.count(`DELETE FROM guardians WHERE id = $1`, [id]);
     for (const id of made.students) await uow.count(`DELETE FROM students WHERE id = $1`, [id]);
     for (const id of made.sections) await uow.count(`DELETE FROM sections WHERE id = $1`, [id]);
@@ -135,9 +140,11 @@ describe('Students API', () => {
       },
     });
     expect(res.status).toBe(201);
-    expect(res.body.data.firstName).toBe('John');
-    expect(res.body.data.admissionNo).toBeDefined();
-    student1Id = res.body.data.id;
+    // create() wraps the student with a probable-duplicates warning (Part
+    // 9.4), so the student itself is nested rather than at the top level.
+    expect(res.body.data.student.firstName).toBe('John');
+    expect(res.body.data.student.admissionNo).toBeDefined();
+    student1Id = res.body.data.student.id;
     made.students.push(student1Id);
   });
 
@@ -161,7 +168,7 @@ describe('Students API', () => {
       body: {
         studentId: student1Id,
         guardianId: guardianId,
-        relation: 'Mother',
+        relation: 'mother',
         isPrimary: true,
         isFeePayer: true,
       },
@@ -182,7 +189,7 @@ describe('Students API', () => {
         admissionDate: '2026-04-01',
       },
     });
-    student2Id = s2.body.data.id;
+    student2Id = s2.body.data.student.id;
     made.students.push(student2Id);
 
     // Fire enrollments concurrently
@@ -205,10 +212,70 @@ describe('Students API', () => {
     expect(rolls).toEqual([1, 2]);
   });
   
-  it('negative test: guardian scope check', async () => {
-     // A guardian cannot see another family's child
-     // (We will simulate a caller with a portal token but for now we just verify list filter rejection)
-     const res = await call('/api/v1/students?classId=' + classId, { method: 'GET' });
-     expect(res.status).toBe(200);
+  it('duplicate guardian link is idempotent, not a second row', async () => {
+    // Linking the same guardian to the same student twice must not create a
+    // second student_guardians row (Part 5.4: duplicate relationships
+    // rejected/prevented, enforced here by the unique constraint plus upsert).
+    const first = await call('/api/v1/student-guardians', {
+      method: 'POST',
+      body: { studentId: student1Id, guardianId, relation: 'mother', isPrimary: true, isFeePayer: true },
+    });
+    expect(first.status).toBe(200);
+    const linksAfterFirst = first.body.data.links.length;
+
+    const second = await call('/api/v1/student-guardians', {
+      method: 'POST',
+      body: { studentId: student1Id, guardianId, relation: 'mother', isPrimary: true, isFeePayer: true },
+    });
+    expect(second.status).toBe(200);
+    expect(second.body.data.links.length).toBe(linksAfterFirst);
+  });
+
+  it('a teacher outside a section cannot view a student inside it (404, not 403)', async () => {
+    // Part 7.2: out of scope must read as "not found", never "forbidden" —
+    // a 403 would confirm the record exists. This account holds the Teacher
+    // role (so it legitimately passes the students.read permission gate) but
+    // has no staff record and so no section assignment, which is what the
+    // policy layer uses to scope a teacher's view.
+    const TEACHER = { username: '__apitest_students_teacher__', password: 'TeacherScope!2026' };
+    await transaction(SYSTEM_ACTOR, async (uow) => {
+      const hash = await hashPassword(TEACHER.password);
+      const existing = await uow.maybeOne<{ id: string }>(
+        `SELECT id::text AS id FROM users WHERE lower(username) = $1`,
+        [TEACHER.username],
+      );
+      const userId =
+        existing?.id ??
+        (
+          await uow.one<{ id: string }>(
+            `INSERT INTO users (username, password_hash, user_type, must_change_password, is_active)
+             VALUES ($1, $2, 'staff', false, true) RETURNING id::text AS id`,
+            [TEACHER.username, hash],
+          )
+        ).id;
+      if (!existing) {
+        await uow.count(
+          `INSERT INTO user_roles (user_id, role_id) SELECT $1, id FROM roles WHERE name = 'Teacher'`,
+          [userId],
+        );
+      }
+    });
+    // Not added to any cleanup list: like the ADMIN fixture above, this user
+    // accumulates audit_logs rows on login, and audit_logs is both immutable
+    // and RESTRICT-linked to users, so deleting it would fail. It is created
+    // idempotently instead, the same way ADMIN is.
+
+    const login = await call('/api/v1/auth/login', {
+      method: 'POST',
+      auth: false,
+      body: { username: TEACHER.username, password: TEACHER.password },
+    });
+    expect(login.status).toBe(200);
+    const teacherToken = login.body.data.accessToken as string;
+
+    const res = await fetch(`${baseUrl}/api/v1/students/${student1Id}`, {
+      headers: { authorization: `Bearer ${teacherToken}` },
+    });
+    expect(res.status).toBe(404);
   });
 });

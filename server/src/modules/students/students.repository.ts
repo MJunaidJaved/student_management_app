@@ -489,6 +489,25 @@ export class EnrollmentRepository extends BaseRepository<EnrollmentRow> {
     );
   }
 
+  /**
+   * The enrollment a withdrawal, transfer-out or graduation must close.
+   *
+   * Deliberately not `currentForStudent`: that filters by the academic
+   * year's `is_current` flag, which is a school-wide setting, not a property
+   * of this student. A leaving event has to close whichever enrollment is
+   * actually `status = 'active'`, even if the school has already moved its
+   * "current year" flag on to the next one.
+   */
+  async findActiveForStudent(uow: Uow, studentId: string): Promise<EnrollmentRow | null> {
+    return uow.maybeOne<EnrollmentRow>(
+      `SELECT * FROM student_enrollments
+        WHERE student_id = $1 AND status = 'active'
+        ORDER BY enrolled_on DESC
+        LIMIT 1`,
+      [studentId],
+    );
+  }
+
   /** The class list for a section: what a teacher sees. */
   async listForSection(
     uow: Uow,
@@ -577,6 +596,91 @@ export async function assertNotAlreadyEnrolled(
     throw new ConflictError(
       'This student is already enrolled for that academic year.',
       'ALREADY_ENROLLED',
+    );
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Admission applications
+ * ------------------------------------------------------------------ */
+
+export type AdmissionApplicationRow = BaseRow & {
+  application_no: string;
+  applicant_name: string;
+  dob: string;
+  gender: string | null;
+  guardian_name: string;
+  guardian_phone: string;
+  applied_class_id: string;
+  status: string;
+  student_id: string | null;
+  remarks: string | null;
+};
+
+export class AdmissionApplicationRepository extends BaseRepository<AdmissionApplicationRow> {
+  protected readonly table = 'admission_applications';
+  protected readonly writableColumns = [
+    'applicant_name',
+    'dob',
+    'gender',
+    'guardian_name',
+    'guardian_phone',
+    'applied_class_id',
+    'remarks',
+  ] as const;
+  // application_no comes from seq_application_no through the column default
+  // (same reasoning as staff.employee_no); status and student_id change only
+  // through the workflow methods below, never a plain update.
+  protected override readonly softDeletes = false;
+  protected readonly defaultSort = 'created_at';
+  protected readonly sortable: SortMap = {
+    created_at: { column: 'admission_applications.created_at', index: 'admission_applications_pkey' },
+    application_no: {
+      column: 'admission_applications.application_no',
+      index: 'admission_applications_application_no_key',
+    },
+  };
+
+  async listFiltered(
+    uow: Uow,
+    filters: { status?: string | undefined; appliedClassId?: string | undefined },
+    page: { limit: number; cursorCreatedAt?: string | undefined; cursorId?: string | undefined },
+  ): Promise<AdmissionApplicationRow[]> {
+    const where = new ConditionBuilder();
+    where.addIf(filters.status, 'status = ?', filters.status);
+    where.addIf(filters.appliedClassId, 'applied_class_id = ?', filters.appliedClassId);
+    if (page.cursorCreatedAt && page.cursorId) {
+      where.add('(created_at, id) < (?::timestamptz, ?::bigint)', page.cursorCreatedAt, page.cursorId);
+    }
+    return uow.many<AdmissionApplicationRow>(
+      `SELECT * FROM admission_applications
+        ${where.where()}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ${page.limit + 1}`,
+      where.params(),
+    );
+  }
+
+  async setStatus(uow: Uow, id: string, status: string, remarks?: string | null): Promise<AdmissionApplicationRow> {
+    return uow.one<AdmissionApplicationRow>(
+      `UPDATE admission_applications
+          SET status = $2, remarks = COALESCE($3, remarks)
+        WHERE id = $1
+        RETURNING *`,
+      [id, status, remarks ?? null],
+      'Application',
+    );
+  }
+
+  /** Link the application to the student created from it, and mark it enrolled. */
+  async markEnrolled(uow: Uow, id: string, studentId: string): Promise<AdmissionApplicationRow> {
+    return uow.one<AdmissionApplicationRow>(
+      `UPDATE admission_applications
+          SET status = 'enrolled', student_id = $2
+        WHERE id = $1
+        RETURNING *`,
+      [id, studentId],
+      'Application',
     );
   }
 }

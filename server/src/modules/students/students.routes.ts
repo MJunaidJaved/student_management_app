@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RouteDeclaration } from '../../core/http/route-registry';
-import { validated, idParam, isoDate, text } from '../../core/http/validate';
+import { validated, idParam, isoDate, text, phone } from '../../core/http/validate';
 import { handler, actorOf, created, okBody, noContent } from '../../core/base/base-controller';
 import type { StudentsService } from './students.service';
 
@@ -51,13 +51,48 @@ const transferBody = z
   })
   .strict();
 
+// Mirrors the student_guardians_relation_check CHECK constraint (Part 5.4):
+// validated here so a bad value gets a friendly field-level 422 instead of a
+// generic one translated from the raw database error.
+const GUARDIAN_RELATIONS = ['father', 'mother', 'guardian', 'brother', 'sister', 'uncle', 'aunt', 'other'] as const;
+
 const linkGuardianBody = z
   .object({
     studentId: idParam,
     guardianId: idParam,
-    relation: text(30),
+    relation: z.enum(GUARDIAN_RELATIONS),
     isPrimary: z.boolean(),
     isFeePayer: z.boolean(),
+  })
+  .strict();
+
+const applicationBody = z
+  .object({
+    applicantName: text(100),
+    dob: isoDate,
+    gender: z.enum(['male', 'female', 'other']).nullable().optional(),
+    guardianName: text(100),
+    guardianPhone: phone,
+    appliedClassId: idParam,
+    remarks: text(200).nullable().optional(),
+  })
+  .strict();
+
+const convertApplicationBody = z
+  .object({
+    academicYearId: idParam,
+    sectionId: idParam,
+    enrolledOn: isoDate,
+    guardianId: idParam.optional(),
+    relation: z.enum(GUARDIAN_RELATIONS).optional(),
+  })
+  .strict();
+
+const leaveSchoolBody = z
+  .object({
+    status: z.enum(['withdrawn', 'transferred', 'graduated']),
+    leavingDate: isoDate,
+    reason: text(200).optional(),
   })
   .strict();
 
@@ -149,6 +184,23 @@ export function studentRoutes(students: StudentsService): RouteDeclaration[] {
         return noContent();
       }),
       errors: ['STUDENT_HAS_HISTORY'],
+    },
+    {
+      method: 'post',
+      path: '/students/:id/leave',
+      summary: 'Record a withdrawal, transfer-out or graduation',
+      permission: 'students.leave_school',
+      ownership: 'student-self',
+      rateLimit: 'userStandard',
+      schemas: {
+        params: z.object({ id: idParam }).strict(),
+        body: leaveSchoolBody,
+      },
+      handler: handler(async (req) => {
+        const { params, body } = validated<{ params: z.ZodTypeAny; body: typeof leaveSchoolBody }>(req);
+        return okBody(await students.leaveSchool(actorOf(req), (params as { id: string }).id, body));
+      }),
+      errors: ['STUDENT_NOT_ACTIVE', 'LEAVING_RECORD_EXISTS'],
     },
     {
       method: 'get',
@@ -316,6 +368,75 @@ export function studentRoutes(students: StudentsService): RouteDeclaration[] {
     },
 
     /* ---------------- admissions ---------------- */
+    {
+      method: 'post',
+      path: '/applications',
+      summary: 'Record an admission enquiry or application',
+      permission: 'admissions.create',
+      ownership: 'none',
+      rateLimit: 'userStandard',
+      schemas: { body: applicationBody },
+      handler: handler(async (req) => {
+        const { body } = validated<{ body: typeof applicationBody }>(req);
+        return created(await students.createApplication(actorOf(req), body));
+      }),
+    },
+    {
+      method: 'get',
+      path: '/applications',
+      summary: 'List admission applications',
+      permission: 'admissions.read',
+      ownership: 'none',
+      rateLimit: 'userStandard',
+      schemas: {
+        query: z.object({
+          status: text(20).optional(),
+          appliedClassId: idParam.optional(),
+          limit: z.coerce.number().int().min(1).max(100).default(50),
+          cursor: z.string().optional(),
+        }).strict(),
+      },
+      handler: handler(async (req) => {
+        const { query } = validated<{ query: z.ZodTypeAny }>(req);
+        const { limit, cursor, ...filters } = query as {
+          limit: number;
+          cursor?: string;
+          status?: string;
+          appliedClassId?: string;
+        };
+        return okBody(await students.listApplications(actorOf(req), filters, { limit, cursor }));
+      }),
+    },
+    {
+      method: 'get',
+      path: '/applications/:id',
+      summary: 'Get an admission application',
+      permission: 'admissions.read',
+      ownership: 'none',
+      rateLimit: 'userStandard',
+      schemas: idSchema,
+      handler: handler(async (req) => {
+        const { params } = validated<typeof idSchema>(req);
+        return okBody(await students.getApplication(actorOf(req), params.id));
+      }),
+    },
+    {
+      method: 'post',
+      path: '/applications/:id/convert',
+      summary: 'Convert an accepted application into an enrolled student',
+      permission: 'admissions.enroll',
+      ownership: 'none',
+      rateLimit: 'userStandard',
+      schemas: {
+        params: z.object({ id: idParam }).strict(),
+        body: convertApplicationBody,
+      },
+      handler: handler(async (req) => {
+        const { params, body } = validated<{ params: z.ZodTypeAny; body: typeof convertApplicationBody }>(req);
+        return created(await students.convertApplication(actorOf(req), (params as { id: string }).id, body));
+      }),
+      errors: ['SECTION_FULL', 'SECTION_CLASS_MISMATCH', 'ALREADY_ENROLLED'],
+    },
     {
       method: 'patch',
       path: '/applications/:id/status',

@@ -29,15 +29,18 @@ import { IllegalTransitionError } from '../../core/errors';
 import type { SectionRepository } from '../academic/academic.repository';
 import { assertYearOpen } from '../academic/academic.repository';
 import {
+  AdmissionApplicationRepository,
   EnrollmentRepository,
   GuardianRepository,
   StudentRepository,
   assertNotAlreadyEnrolled,
   assertSectionInClass,
+  type AdmissionApplicationRow,
   type EnrollmentRow,
   type GuardianRow,
   type StudentRow,
 } from './students.repository';
+import type { StudentStatus } from '../../core/db/enums';
 
 export type StudentView = {
   id: string;
@@ -91,12 +94,120 @@ function toStudentView(row: StudentRow, showSensitive: boolean): StudentView {
   };
 }
 
+export type GuardianView = {
+  id: string;
+  fullName: string;
+  nationalId: string | null;
+  phone: string;
+  email: string | null;
+  occupation: string | null;
+  address: string | null;
+};
+
+/** `GuardianRow` is never returned to a client as-is (Part 4: no raw rows). */
+function toGuardianView(row: GuardianRow): GuardianView {
+  return {
+    id: row.id,
+    fullName: row.full_name,
+    nationalId: row.national_id,
+    phone: row.phone,
+    email: row.email,
+    occupation: row.occupation,
+    address: row.address,
+  };
+}
+
+export type GuardianLinkView = GuardianView & {
+  linkId: string;
+  relation: string;
+  isPrimary: boolean;
+  isFeePayer: boolean;
+};
+
+function toGuardianLinkView(
+  row: GuardianRow & { relation: string; is_primary: boolean; is_fee_payer: boolean; link_id: string },
+): GuardianLinkView {
+  return {
+    ...toGuardianView(row),
+    linkId: row.link_id,
+    relation: row.relation,
+    isPrimary: row.is_primary,
+    isFeePayer: row.is_fee_payer,
+  };
+}
+
+export type EnrollmentView = {
+  id: string;
+  studentId: string;
+  academicYearId: string;
+  classId: string;
+  sectionId: string;
+  rollNo: number;
+  status: string;
+  enrolledOn: string;
+};
+
+function toEnrollmentView(row: EnrollmentRow): EnrollmentView {
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    academicYearId: row.academic_year_id,
+    classId: row.class_id,
+    sectionId: row.section_id,
+    rollNo: row.roll_no,
+    status: row.status,
+    enrolledOn: row.enrolled_on,
+  };
+}
+
+function toClassListEntry(
+  row: EnrollmentRow & { first_name: string; last_name: string | null; admission_no: string },
+): EnrollmentView & { firstName: string; lastName: string | null; admissionNo: string } {
+  return {
+    ...toEnrollmentView(row),
+    firstName: row.first_name,
+    lastName: row.last_name,
+    admissionNo: row.admission_no,
+  };
+}
+
+export type AdmissionApplicationView = {
+  id: string;
+  applicationNo: string;
+  applicantName: string;
+  dob: string;
+  gender: string | null;
+  guardianName: string;
+  guardianPhone: string;
+  appliedClassId: string;
+  status: string;
+  studentId: string | null;
+  remarks: string | null;
+};
+
+function toApplicationView(row: AdmissionApplicationRow): AdmissionApplicationView {
+  return {
+    id: row.id,
+    applicationNo: row.application_no,
+    applicantName: row.applicant_name,
+    dob: row.dob,
+    gender: row.gender,
+    guardianName: row.guardian_name,
+    guardianPhone: row.guardian_phone,
+    appliedClassId: row.applied_class_id,
+    status: row.status,
+    studentId: row.student_id,
+    remarks: row.remarks,
+  };
+}
+
 export class StudentsService {
   constructor(
     private readonly students: StudentRepository,
     private readonly guardians: GuardianRepository,
     private readonly enrollments: EnrollmentRepository,
     private readonly sections: SectionRepository,
+    private readonly applications: AdmissionApplicationRepository,
     private readonly policy: StudentPolicy,
     private readonly permissions: PermissionService,
   ) {}
@@ -110,7 +221,10 @@ export class StudentsService {
 
   /* ---------------- reads ---------------- */
 
-  async getById(actor: Actor, id: string): Promise<StudentView & { guardians: unknown[]; enrollment: EnrollmentRow | null }> {
+  async getById(
+    actor: Actor,
+    id: string,
+  ): Promise<StudentView & { guardians: GuardianLinkView[]; enrollment: EnrollmentView | null }> {
     return readTransaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
       enforce(await this.policy.canView(ctx, id), 'Student');
@@ -118,10 +232,11 @@ export class StudentsService {
       const row = await this.students.getById(uow, id);
       const showSensitive = ctx.permissions.has('students.read_all') || actor.userType === 'admin';
 
+      const enrollment = await this.enrollments.currentForStudent(uow, id);
       return {
         ...toStudentView(row, showSensitive),
-        guardians: await this.guardians.forStudent(uow, id),
-        enrollment: await this.enrollments.currentForStudent(uow, id),
+        guardians: (await this.guardians.forStudent(uow, id)).map(toGuardianLinkView),
+        enrollment: enrollment ? toEnrollmentView(enrollment) : null,
       };
     });
   }
@@ -233,9 +348,19 @@ export class StudentsService {
           // tried; the guardian path is how reception finds a child from an
           // incoming call.
           const viaGuardian = await this.guardians.findByPhone(uow, term.replace(/[\s()-]/g, ''));
-          const children: unknown[] = [];
+          const children: { id: string; admissionNo: string; firstName: string; lastName: string | null; relation: string; isPrimary: boolean }[] = [];
           for (const g of viaGuardian) {
-            children.push(...(await this.guardians.childrenOf(uow, g.id)));
+            const rows = await this.guardians.childrenOf(uow, g.id);
+            children.push(
+              ...rows.map((r) => ({
+                id: r.id,
+                admissionNo: r.admission_no,
+                firstName: r.first_name,
+                lastName: r.last_name,
+                relation: r.relation,
+                isPrimary: r.is_primary,
+              })),
+            );
           }
           return { kind, students: children };
         }
@@ -244,17 +369,26 @@ export class StudentsService {
             limit: options.limit,
             prefixOnly: options.typeahead ?? false,
           });
-          return { kind, students: rows };
+          return { kind, students: rows.map(minimal) };
         }
       }
     });
   }
 
-  async siblingsOf(actor: Actor, studentId: string) {
+  async siblingsOf(
+    actor: Actor,
+    studentId: string,
+  ): Promise<{ id: string; admissionNo: string; firstName: string; lastName: string | null }[]> {
     return readTransaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
       enforce(await this.policy.canView(ctx, studentId), 'Student');
-      return this.guardians.siblingsOf(uow, studentId);
+      const rows = await this.guardians.siblingsOf(uow, studentId);
+      return rows.map((r) => ({
+        id: r.id,
+        admissionNo: r.admission_no,
+        firstName: r.first_name,
+        lastName: r.last_name,
+      }));
     });
   }
 
@@ -387,7 +521,7 @@ export class StudentsService {
       occupation?: string | null | undefined;
       address?: string | null | undefined;
     },
-  ): Promise<GuardianRow> {
+  ): Promise<GuardianView> {
     return transaction(actor, async (uow) => {
       // Reuse an existing guardian rather than duplicating them: this is how a
       // sibling admission links to the same parent, and it is what makes the
@@ -402,7 +536,7 @@ export class StudentsService {
         }
       }
 
-      return this.guardians.create(uow, {
+      const row = await this.guardians.create(uow, {
         full_name: input.fullName,
         phone: input.phone,
         national_id: input.nationalId ?? null,
@@ -410,18 +544,23 @@ export class StudentsService {
         occupation: input.occupation ?? null,
         address: input.address ?? null,
       });
+      return toGuardianView(row);
     });
   }
 
-  async searchGuardians(actor: Actor, term: string, limit: number): Promise<GuardianRow[]> {
+  async searchGuardians(actor: Actor, term: string, limit: number): Promise<GuardianView[]> {
     return readTransaction(actor, async (uow) => {
       const kind = classifySearchTerm(term);
-      if (kind === 'phone') return this.guardians.findByPhone(uow, term.replace(/[\s()-]/g, ''));
-      if (kind === 'national_id') {
+      let rows: GuardianRow[];
+      if (kind === 'phone') {
+        rows = await this.guardians.findByPhone(uow, term.replace(/[\s()-]/g, ''));
+      } else if (kind === 'national_id') {
         const one = await this.guardians.findByNationalId(uow, term.replace(/\D/g, ''));
-        return one ? [one] : [];
+        rows = one ? [one] : [];
+      } else {
+        rows = await this.guardians.searchByName(uow, term, limit);
       }
-      return this.guardians.searchByName(uow, term, limit);
+      return rows.map(toGuardianView);
     });
   }
 
@@ -434,14 +573,14 @@ export class StudentsService {
       isPrimary: boolean;
       isFeePayer: boolean;
     },
-  ): Promise<unknown[]> {
+  ): Promise<GuardianLinkView[]> {
     return transaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
       enforce(await this.policy.canEdit(ctx, input.studentId), 'Student');
 
       await this.guardians.getById(uow, input.guardianId);
       await this.guardians.link(uow, input);
-      return this.guardians.forStudent(uow, input.studentId);
+      return (await this.guardians.forStudent(uow, input.studentId)).map(toGuardianLinkView);
     });
   }
 
@@ -499,7 +638,7 @@ export class StudentsService {
       enrolledOn: string;
       rollNo?: number | undefined;
     },
-  ): Promise<EnrollmentRow> {
+  ): Promise<EnrollmentView> {
     return transaction(actor, async (uow) => {
       await assertYearOpen(uow, input.academicYearId);
       await this.students.getById(uow, input.studentId);
@@ -526,7 +665,7 @@ export class StudentsService {
         input.rollNo ??
         (await this.enrollments.nextRollNo(uow, input.sectionId, input.academicYearId));
 
-      return this.enrollments.create(uow, {
+      const row = await this.enrollments.create(uow, {
         student_id: input.studentId,
         academic_year_id: input.academicYearId,
         class_id: input.classId,
@@ -534,6 +673,7 @@ export class StudentsService {
         roll_no: rollNo,
         enrolled_on: input.enrolledOn,
       });
+      return toEnrollmentView(row);
     });
   }
 
@@ -542,7 +682,7 @@ export class StudentsService {
     actor: Actor,
     enrollmentId: string,
     input: { sectionId: string; classId: string },
-  ): Promise<EnrollmentRow> {
+  ): Promise<EnrollmentView> {
     return transaction(actor, async (uow) => {
       const enrollment = await this.enrollments.getById(uow, enrollmentId);
       await assertYearOpen(uow, enrollment.academic_year_id);
@@ -566,11 +706,16 @@ export class StudentsService {
         input.sectionId,
         enrollment.academic_year_id,
       );
-      return this.enrollments.transferSection(uow, enrollmentId, input.sectionId, input.classId, rollNo);
+      const row = await this.enrollments.transferSection(uow, enrollmentId, input.sectionId, input.classId, rollNo);
+      return toEnrollmentView(row);
     });
   }
 
-  async classList(actor: Actor, sectionId: string, yearId: string) {
+  async classList(
+    actor: Actor,
+    sectionId: string,
+    yearId: string,
+  ): Promise<ReturnType<typeof toClassListEntry>[]> {
     return readTransaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
       // A teacher sees only their own sections; read_all lifts it.
@@ -584,7 +729,8 @@ export class StudentsService {
         );
         if (rows.length === 0) throw new NotFoundError('Section');
       }
-      return this.enrollments.listForSection(uow, sectionId, yearId);
+      const rows = await this.enrollments.listForSection(uow, sectionId, yearId);
+      return rows.map(toClassListEntry);
     });
   }
 
@@ -603,6 +749,84 @@ export class StudentsService {
   /* ---------------- admission applications ---------------- */
 
   /**
+   * Record an enquiry or application.
+   *
+   * Always created at `enquiry`, the workflow's start state — the database
+   * column default agrees, but it is set explicitly here rather than relied
+   * on, since `APPLICATION_TRANSITIONS` is the single source of truth for
+   * where the workflow begins.
+   */
+  async createApplication(
+    actor: Actor,
+    input: {
+      applicantName: string;
+      dob: string;
+      gender?: string | null | undefined;
+      guardianName: string;
+      guardianPhone: string;
+      appliedClassId: string;
+      remarks?: string | null | undefined;
+    },
+  ): Promise<AdmissionApplicationView> {
+    return transaction(actor, async (uow) => {
+      const row = await this.applications.create(uow, {
+        applicant_name: input.applicantName,
+        dob: input.dob,
+        gender: input.gender ?? null,
+        guardian_name: input.guardianName,
+        guardian_phone: input.guardianPhone,
+        applied_class_id: input.appliedClassId,
+        remarks: input.remarks ?? null,
+      });
+      return toApplicationView(row);
+    });
+  }
+
+  async listApplications(
+    actor: Actor,
+    filters: { status?: string | undefined; appliedClassId?: string | undefined },
+    page: { limit: number; cursor?: string | undefined },
+  ): Promise<{ items: AdmissionApplicationView[]; nextCursor: string | null; hasMore: boolean }> {
+    return readTransaction(actor, async (uow) => {
+      let cursorCreatedAt: string | undefined;
+      let cursorId: string | undefined;
+      if (page.cursor) {
+        const decoded = JSON.parse(Buffer.from(page.cursor, 'base64url').toString('utf8')) as {
+          v: string;
+          i: string;
+        };
+        cursorCreatedAt = decoded.v;
+        cursorId = decoded.i;
+      }
+
+      const rows = await this.applications.listFiltered(uow, filters, {
+        limit: page.limit,
+        cursorCreatedAt,
+        cursorId,
+      });
+      const hasMore = rows.length > page.limit;
+      const items = hasMore ? rows.slice(0, page.limit) : rows;
+      const last = items[items.length - 1];
+
+      return {
+        items: items.map(toApplicationView),
+        hasMore,
+        nextCursor:
+          hasMore && last
+            ? Buffer.from(
+                JSON.stringify({ v: last.created_at, i: last.id }),
+                'utf8',
+              ).toString('base64url')
+            : null,
+      };
+    });
+  }
+
+  async getApplication(actor: Actor, id: string): Promise<AdmissionApplicationView> {
+    return readTransaction(actor, async (uow) => toApplicationView(await this.applications.getById(uow, id)));
+  }
+
+  /**
    * Move an application through its workflow.
    *
    * Transitions come from `APPLICATION_TRANSITIONS`; anything not listed is
@@ -615,13 +839,9 @@ export class StudentsService {
     id: string,
     to: ApplicationStatus,
     remarks?: string,
-  ): Promise<{ id: string; status: string }> {
+  ): Promise<AdmissionApplicationView> {
     return transaction(actor, async (uow) => {
-      const app = await uow.one<{ id: string; status: ApplicationStatus }>(
-        `SELECT id::text AS id, status FROM admission_applications WHERE id = $1`,
-        [id],
-        'Application',
-      );
+      const app = await this.applications.getById(uow, id);
 
       if (to === 'enrolled') {
         throw new BusinessRuleError(
@@ -630,40 +850,197 @@ export class StudentsService {
         );
       }
 
-      if (!canTransition(APPLICATION_TRANSITIONS, app.status, to)) {
+      if (!canTransition(APPLICATION_TRANSITIONS, app.status as ApplicationStatus, to)) {
         throw new IllegalTransitionError(
           'application',
           app.status,
           to,
-          APPLICATION_TRANSITIONS[app.status],
+          APPLICATION_TRANSITIONS[app.status as ApplicationStatus],
         );
       }
 
-      const updated = await uow.one<{ id: string; status: string }>(
-        `UPDATE admission_applications
-            SET status = $2, remarks = COALESCE($3, remarks)
-          WHERE id = $1
-          RETURNING id::text AS id, status`,
-        [id, to, remarks ?? null],
+      return toApplicationView(await this.applications.setStatus(uow, id, to, remarks ?? null));
+    });
+  }
+
+  /**
+   * Convert an accepted application into an enrolled student.
+   *
+   * One transaction, as Module 3 requires: the student, the guardian link and
+   * the first enrollment are created together, and the application is marked
+   * `enrolled` and linked to the new student in the same statement set. A
+   * failure at any step rolls all of it back — there is never a student
+   * without an enrollment, or an application that says "enrolled" with
+   * nothing behind it.
+   *
+   * The class is the one the application was made against; it is not an
+   * input, so a caller cannot enrol an applicant into a different class than
+   * what was accepted. An existing guardian can be linked by id, or a new one
+   * is created from the application's own guardian fields.
+   */
+  async convertApplication(
+    actor: Actor,
+    applicationId: string,
+    input: {
+      academicYearId: string;
+      sectionId: string;
+      enrolledOn: string;
+      guardianId?: string | undefined;
+      relation?: string | undefined;
+    },
+  ): Promise<{ student: StudentView; enrollment: EnrollmentView; guardian: GuardianView; possibleDuplicates: unknown[] }> {
+    return transaction(actor, async (uow) => {
+      const app = await this.applications.getById(uow, applicationId);
+      if (app.status !== 'accepted') {
+        throw new IllegalTransitionError('application', app.status, 'enrolled', ['accepted']);
+      }
+
+      await assertYearOpen(uow, input.academicYearId);
+      await assertSectionInClass(uow, input.sectionId, app.applied_class_id);
+
+      // Splitting on the first space is a deliberate simplification: the
+      // application stores one free-text name, but `students` requires a
+      // separate first name. Anything after the first word is the surname.
+      const [firstName, ...rest] = app.applicant_name.trim().split(/\s+/);
+      const lastName = rest.length > 0 ? rest.join(' ') : null;
+
+      const duplicates = await this.students.findProbableDuplicates(uow, {
+        firstName: firstName ?? app.applicant_name,
+        lastName,
+        dob: app.dob,
+        phone: null,
+        nationalId: null,
+      });
+
+      const admissionNo = await this.students.nextAdmissionNo(uow);
+      const student = await this.students.createWithAdmissionNo(
+        uow,
+        {
+          first_name: firstName ?? app.applicant_name,
+          last_name: lastName,
+          gender: app.gender ?? 'other',
+          dob: app.dob,
+          admission_date: input.enrolledOn,
+        },
+        admissionNo,
       );
-      return updated;
+
+      const guardian = input.guardianId
+        ? await this.guardians.getById(uow, input.guardianId)
+        : await this.guardians.create(uow, {
+            full_name: app.guardian_name,
+            phone: app.guardian_phone,
+          });
+
+      await this.guardians.link(uow, {
+        studentId: student.id,
+        guardianId: guardian.id,
+        relation: input.relation ?? 'guardian',
+        isPrimary: true,
+        isFeePayer: true,
+      });
+
+      await assertNotAlreadyEnrolled(uow, this.enrollments, student.id, input.academicYearId);
+      const section = await this.sections.lockForEnrollment(uow, input.sectionId);
+      const strength = await this.sections.currentStrength(uow, input.sectionId);
+      if (strength >= section.capacity) {
+        throw new BusinessRuleError(
+          `Section is full (${strength} of ${section.capacity}).`,
+          'SECTION_FULL',
+        );
+      }
+      const rollNo = await this.enrollments.nextRollNo(uow, input.sectionId, input.academicYearId);
+      const enrollment = await this.enrollments.create(uow, {
+        student_id: student.id,
+        academic_year_id: input.academicYearId,
+        class_id: app.applied_class_id,
+        section_id: input.sectionId,
+        roll_no: rollNo,
+        enrolled_on: input.enrolledOn,
+      });
+
+      await this.applications.markEnrolled(uow, applicationId, student.id);
+
+      return {
+        student: toStudentView(student, true),
+        enrollment: toEnrollmentView(enrollment),
+        guardian: toGuardianView(guardian),
+        possibleDuplicates: duplicates,
+      };
+    });
+  }
+
+  /* ---------------- leaving ---------------- */
+
+  /**
+   * Record a withdrawal, transfer-out or graduation.
+   *
+   * Deliberately simple for this phase: a status change plus one audit-trail
+   * row, no certificate PDF. `student_leaving_records.student_id` is unique —
+   * the schema allows exactly one leaving record per student ever — so a
+   * second attempt is refused with a clear message rather than the raw
+   * constraint error.
+   */
+  async leaveSchool(
+    actor: Actor,
+    studentId: string,
+    input: { status: Exclude<StudentStatus, 'active'>; leavingDate: string; reason?: string | undefined },
+  ): Promise<StudentView> {
+    return transaction(actor, async (uow) => {
+      const ctx = await this.context(uow, actor);
+      enforce(await this.policy.canEdit(ctx, studentId), 'Student');
+
+      const student = await this.students.getById(uow, studentId);
+      if (student.status !== 'active') {
+        throw new BusinessRuleError(
+          `This student is already ${student.status}.`,
+          'STUDENT_NOT_ACTIVE',
+        );
+      }
+
+      const existingRecord = await uow.maybeOne<{ id: string }>(
+        `SELECT id FROM student_leaving_records WHERE student_id = $1`,
+        [studentId],
+      );
+      if (existingRecord) {
+        throw new ConflictError(
+          'A leaving record already exists for this student.',
+          'LEAVING_RECORD_EXISTS',
+        );
+      }
+
+      await this.students.setStatus(uow, studentId, input.status);
+
+      const enrollment = await this.enrollments.findActiveForStudent(uow, studentId);
+      if (enrollment) {
+        await this.enrollments.setStatus(uow, enrollment.id, input.status);
+      }
+
+      await uow.count(
+        `INSERT INTO student_leaving_records (student_id, leaving_date, reason, issued_by)
+         VALUES ($1, $2, $3, $4)`,
+        [studentId, input.leavingDate, input.reason ?? null, actor.userId],
+      );
+
+      const row = await this.students.getById(uow, studentId);
+      return toStudentView(row, true);
     });
   }
 }
 
 /** The minimal projection used by search results and pickers. */
-function minimal(row: StudentRow): {
+function minimal(row: Pick<StudentRow, 'id' | 'admission_no' | 'first_name' | 'last_name' | 'status'>): {
   id: string;
-  admission_no: string;
-  first_name: string;
-  last_name: string | null;
+  admissionNo: string;
+  firstName: string;
+  lastName: string | null;
   status: string;
 } {
   return {
     id: row.id,
-    admission_no: row.admission_no,
-    first_name: row.first_name,
-    last_name: row.last_name,
+    admissionNo: row.admission_no,
+    firstName: row.first_name,
+    lastName: row.last_name,
     status: row.status,
   };
 }
