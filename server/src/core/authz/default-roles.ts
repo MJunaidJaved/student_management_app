@@ -53,14 +53,17 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'students.read_discipline', 'students.manage_discipline', 'students.export',
     'guardians.read', 'guardians.search',
     'attendance.read_all', 'attendance.read', 'attendance.mark_override',
-    'attendance.edit_past', 'attendance.read_staff',
-    'leave.read_all', 'leave.approve_student', 'leave.approve_staff',
+    'attendance.edit_past', 'attendance.read_staff', 'attendance.mark_staff',
+    'leave.read_all', 'leave.read_own', 'leave.approve_student', 'leave.approve_staff',
+    'leave.manage_types', 'leave.manage_balances',
+    'timetable.read', 'timetable.manage', 'timetable.manage_periods',
+    'substitutions.read', 'substitutions.manage',
     'fees.read', 'fees.read_defaulters', 'fees.approve_discount',
     'fees.cancel_invoice', 'fees.waive_fine', 'fees.read_collection_report',
     'exams.read_all', 'exams.read', 'exams.manage', 'exams.publish', 'exams.lock',
     'exams.unlock', 'exams.compute_results', 'exams.manage_grading',
     'exams.read_analysis', 'exams.generate_report_cards', 'exams.generate_admit_cards',
-    'staff.read', 'staff.read_workload', 'staff.read_sensitive',
+    'staff.read', 'staff.read_own', 'staff.read_workload', 'staff.read_sensitive',
     'staff.manage_contracts', 'staff.manage_departments',
   ],
 
@@ -75,6 +78,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'leave.read_own', 'leave.request', 'leave.approve_student',
     'exams.read', 'exams.enter_marks', 'exams.read_analysis',
     'staff.read_own', 'staff.read_workload',
+    // Their own timetable and substitution history, not the school's.
+    'timetable.read', 'substitutions.read',
   ],
 
   Accountant: [

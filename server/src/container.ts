@@ -50,6 +50,14 @@ import {
   StaffRepository,
 } from './modules/staff/staff.repository';
 import { StaffService } from './modules/staff/staff.service';
+import { StudentAttendanceRepository, StaffAttendanceRepository } from './modules/attendance/attendance.repository';
+import { AttendanceService } from './modules/attendance/attendance.service';
+import { LeaveTypeRepository, LeaveRequestRepository, StaffLeaveBalanceRepository } from './modules/leave/leave.repository';
+import { LeaveService } from './modules/leave/leave.service';
+import { PeriodRepository, TimetableEntryRepository, SubstitutionRepository } from './modules/timetable/timetable.repository';
+import { TimetableService } from './modules/timetable/timetable.service';
+import { NotificationRepository, NotificationLogRepository } from './modules/notifications/notifications.repository';
+import { NotificationService } from './modules/notifications/notifications.service';
 
 export type Container = {
   cache: CacheStore;
@@ -73,6 +81,16 @@ export type Container = {
     departments: DepartmentRepository;
     designations: DesignationRepository;
     staff: StaffRepository;
+    studentAttendance: StudentAttendanceRepository;
+    staffAttendance: StaffAttendanceRepository;
+    leaveTypes: LeaveTypeRepository;
+    leaveRequests: LeaveRequestRepository;
+    staffLeaveBalances: StaffLeaveBalanceRepository;
+    periods: PeriodRepository;
+    timetableEntries: TimetableEntryRepository;
+    substitutions: SubstitutionRepository;
+    notifications: NotificationRepository;
+    notificationLogs: NotificationLogRepository;
   };
   services: {
     auth: AuthService;
@@ -82,6 +100,10 @@ export type Container = {
     academic: AcademicService;
     students: StudentsService;
     staff: StaffService;
+    attendance: AttendanceService;
+    leave: LeaveService;
+    timetable: TimetableService;
+    notifications: NotificationService;
   };
 };
 
@@ -125,6 +147,17 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const departmentsRepo = new DepartmentRepository();
   const designationsRepo = new DesignationRepository();
   const staffRepo = new StaffRepository();
+  const studentAttendanceRepo = new StudentAttendanceRepository();
+  const staffAttendanceRepo = new StaffAttendanceRepository();
+  const leaveTypesRepo = new LeaveTypeRepository();
+  const leaveRequestsRepo = new LeaveRequestRepository();
+  const staffLeaveBalancesRepo = new StaffLeaveBalanceRepository();
+  const periodsRepo = new PeriodRepository();
+  const timetableEntriesRepo = new TimetableEntryRepository();
+  const substitutionsRepo = new SubstitutionRepository();
+  const notificationsRepo = new NotificationRepository();
+  const notificationLogsRepo = new NotificationLogRepository();
+  const notificationService = new NotificationService(notificationsRepo, notificationLogsRepo);
 
   const studentPolicy = new StudentPolicy(cache, permissions);
   const sectionPolicy = new SectionPolicy(cache, permissions);
@@ -153,6 +186,16 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       departments: departmentsRepo,
       designations: designationsRepo,
       staff: staffRepo,
+      studentAttendance: studentAttendanceRepo,
+      staffAttendance: staffAttendanceRepo,
+      leaveTypes: leaveTypesRepo,
+      leaveRequests: leaveRequestsRepo,
+      staffLeaveBalances: staffLeaveBalancesRepo,
+      periods: periodsRepo,
+      timetableEntries: timetableEntriesRepo,
+      substitutions: substitutionsRepo,
+      notifications: notificationsRepo,
+      notificationLogs: notificationLogsRepo,
     },
     services: {
       auth: new AuthService(authRepository, permissions, denylist),
@@ -180,6 +223,38 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         permissions,
       ),
       staff: new StaffService(staffRepo, departmentsRepo, designationsRepo, staffPolicy, permissions),
+      attendance: new AttendanceService(
+        studentAttendanceRepo,
+        staffAttendanceRepo,
+        enrollmentsRepo,
+        sections,
+        staffRepo,
+        sectionPolicy,
+        studentPolicy,
+        permissions,
+      ),
+      leave: new LeaveService(
+        leaveTypesRepo,
+        leaveRequestsRepo,
+        staffLeaveBalancesRepo,
+        enrollmentsRepo,
+        staffRepo,
+        studentPolicy,
+        permissions,
+        notificationService,
+      ),
+      timetable: new TimetableService(
+        periodsRepo,
+        timetableEntriesRepo,
+        substitutionsRepo,
+        sections,
+        classSubjects,
+        rooms,
+        staffRepo,
+        permissions,
+        notificationService,
+      ),
+      notifications: notificationService,
     },
   };
 }

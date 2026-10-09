@@ -19,9 +19,9 @@
  *   * `.override` where a code lifts a scope restriction rather than granting
  *     an action, for example marking attendance for a section you do not teach.
  *
- * Only modules 1 to 7 are listed. Modules 8 to 15 are specified in a brief file
- * that has not been supplied, so inventing their codes would mean inventing
- * their endpoints.
+ * Modules 1 to 7 and module 9 (timetable) are listed; both are built. The rest
+ * of modules 8 to 15 are not, so their codes are not invented ahead of their
+ * endpoints.
  */
 
 export type PermissionDefinition = {
@@ -205,6 +205,19 @@ const staff = define('staff', [
   ['read_workload', 'View teacher workload'],
 ]);
 
+/* ---------------- Module 9: timetable ---------------- */
+
+const timetable = define('timetable', [
+  ['read', 'View timetables within your scope'],
+  ['manage', 'Create, edit and bulk-save timetable entries', true],
+  ['manage_periods', 'Create and edit the bell schedule (periods)'],
+]);
+
+const substitutions = define('substitutions', [
+  ['read', 'View substitution history and schedules within your scope'],
+  ['manage', 'Assign and cancel teacher substitutions', true],
+]);
+
 /** Every permission in the system. */
 export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...users, ...roles, ...permissions, ...audit, ...settings,
@@ -212,6 +225,7 @@ export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...admissions, ...students, ...guardians,
   ...attendance, ...leave,
   ...fees,
+  ...timetable, ...substitutions,
   ...exams,
   ...staff,
 ];

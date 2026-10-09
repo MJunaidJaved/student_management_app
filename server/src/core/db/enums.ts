@@ -50,6 +50,21 @@ export const STAFF_STATUSES = ['active', 'resigned', 'terminated'] as const;
 /** `exams.status` — the state machine in Module 6. */
 export const EXAM_STATUSES = ['draft', 'published', 'locked'] as const;
 
+/** `student_attendance.status` */
+export const STUDENT_ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'leave'] as const;
+
+/** `staff_attendance.status` */
+export const STAFF_ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'leave', 'half_day'] as const;
+
+/** `leave_requests.status` — the state machine in Module 4. */
+export const LEAVE_STATUSES = ['pending', 'approved', 'rejected', 'cancelled'] as const;
+
+/** `leave_requests.applicant_type` */
+export const LEAVE_APPLICANT_TYPES = ['student', 'staff'] as const;
+
+/** `leave_types.applies_to` */
+export const LEAVE_APPLIES_TO = ['student', 'staff', 'both'] as const;
+
 export type Gender = (typeof GENDERS)[number];
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
@@ -58,6 +73,10 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 export type SubjectType = (typeof SUBJECT_TYPES)[number];
 export type StaffStatus = (typeof STAFF_STATUSES)[number];
 export type ExamStatus = (typeof EXAM_STATUSES)[number];
+export type StudentAttendanceStatus = (typeof STUDENT_ATTENDANCE_STATUSES)[number];
+export type StaffAttendanceStatus = (typeof STAFF_ATTENDANCE_STATUSES)[number];
+export type LeaveStatus = (typeof LEAVE_STATUSES)[number];
+export type LeaveApplicantType = (typeof LEAVE_APPLICANT_TYPES)[number];
 
 /**
  * Allowed transitions for the admission workflow (Part 4.6, State pattern).
@@ -87,6 +106,21 @@ export const EXAM_TRANSITIONS: Readonly<Record<ExamStatus, readonly ExamStatus[]
   draft: ['published'],
   published: ['locked', 'draft'],
   locked: [],
+};
+
+/**
+ * Allowed transitions for a leave request (Module 4).
+ *
+ * `approved` can still move to `cancelled` — a reversal, which is what
+ * restores any staff leave balance it consumed. `rejected` and `cancelled`
+ * are both terminal: nothing reopens a decided request, a fresh one is
+ * submitted instead.
+ */
+export const LEAVE_TRANSITIONS: Readonly<Record<LeaveStatus, readonly LeaveStatus[]>> = {
+  pending: ['approved', 'rejected', 'cancelled'],
+  approved: ['cancelled'],
+  rejected: [],
+  cancelled: [],
 };
 
 /** True when `to` is reachable from `from`. */

@@ -221,9 +221,11 @@ describe('authenticated requests', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.user.username).toBe(USERNAME);
     expect(res.body.data.roles.map((r: { name: string }) => r.name)).toContain(SUPER_ADMIN_ROLE);
-    // Super Admin holds the whole catalogue.
+    // Super Admin holds the whole catalogue. This count is the catalogue's
+    // total size (PERMISSION_CATALOG.length) and must be updated whenever a
+    // module adds permission codes — 113 as of Section 2 (timetable, substitutions).
     expect(res.body.data.permissions).toContain('fees.reverse_payment');
-    expect(res.body.data.permissions.length).toBe(108);
+    expect(res.body.data.permissions.length).toBe(113);
   });
 
   it('rotates the refresh token and invalidates the old one', async () => {

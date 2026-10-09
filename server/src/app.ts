@@ -33,6 +33,10 @@ import { auditRoutes as auditLogRoutes } from './modules/audit/audit.routes';
 import { academicRoutes } from './modules/academic/academic.routes';
 import { studentRoutes } from './modules/students/students.routes';
 import { staffRoutes } from './modules/staff/staff.routes';
+import { attendanceRoutes } from './modules/attendance/attendance.routes';
+import { leaveRoutes } from './modules/leave/leave.routes';
+import { timetableRoutes } from './modules/timetable/timetable.routes';
+import { notificationRoutes } from './modules/notifications/notifications.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -120,6 +124,10 @@ export function createApp(container: Container): Express {
   mount('/academic', academicRoutes(container.services.academic));
   mount('', studentRoutes(container.services.students));
   mount('', staffRoutes(container.services.staff));
+  mount('', attendanceRoutes(container.services.attendance));
+  mount('', leaveRoutes(container.services.leave));
+  mount('', timetableRoutes(container.services.timetable));
+  mount('', notificationRoutes(container.services.notifications));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {
