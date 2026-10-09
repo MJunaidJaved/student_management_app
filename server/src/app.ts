@@ -39,6 +39,9 @@ import { timetableRoutes } from './modules/timetable/timetable.routes';
 import { notificationRoutes } from './modules/notifications/notifications.routes';
 import { feesRoutes } from './modules/fees/fees.routes';
 import { accountingRoutes } from './modules/accounting/accounting.routes';
+import { examsRoutes } from './modules/exams/exams.routes';
+import { promotionsRoutes } from './modules/promotions/promotions.routes';
+import { payrollRoutes } from './modules/payroll/payroll.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -132,6 +135,9 @@ export function createApp(container: Container): Express {
   mount('', notificationRoutes(container.services.notifications));
   mount('', feesRoutes(container.services.fees));
   mount('', accountingRoutes(container.services.accounting));
+  mount('', examsRoutes(container.services.exams));
+  mount('', promotionsRoutes(container.services.promotions));
+  mount('', payrollRoutes(container.services.payroll));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {

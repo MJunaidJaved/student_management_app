@@ -58,15 +58,18 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'leave.manage_types', 'leave.manage_balances',
     'timetable.read', 'timetable.manage', 'timetable.manage_periods',
     'substitutions.read', 'substitutions.manage',
-    'fees.read', 'fees.read_defaulters', 'fees.approve_discount',
+    'fees.read', 'fees.read_own', 'fees.read_defaulters', 'fees.approve_discount',
     'fees.cancel_invoice', 'fees.waive_fine', 'fees.read_collection_report',
     'fees.reverse_payment',
     'accounting.read',
-    'exams.read_all', 'exams.read', 'exams.manage', 'exams.publish', 'exams.lock',
+    'exams.read_all', 'exams.read', 'exams.read_own', 'exams.manage', 'exams.publish', 'exams.lock',
     'exams.unlock', 'exams.compute_results', 'exams.manage_grading',
     'exams.read_analysis', 'exams.generate_report_cards', 'exams.generate_admit_cards',
     'staff.read', 'staff.read_own', 'staff.read_workload', 'staff.read_sensitive',
     'staff.manage_contracts', 'staff.manage_departments',
+    // Approves; does not run payroll itself — the same segregation the
+    // Accountant's own entry already names.
+    'payroll.read', 'payroll.read_own', 'payroll.approve',
   ],
 
   Teacher: [
@@ -78,8 +81,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'guardians.read',
     'attendance.read', 'attendance.mark',
     'leave.read_own', 'leave.request', 'leave.approve_student',
-    'exams.read', 'exams.enter_marks', 'exams.read_analysis',
+    'exams.read', 'exams.read_own', 'exams.enter_marks', 'exams.read_analysis',
     'staff.read_own', 'staff.read_workload',
+    'payroll.read_own',
     // Their own timetable and substitution history, not the school's.
     'timetable.read', 'substitutions.read',
   ],
@@ -89,7 +93,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     // without the separate code, which stays with the Principal and Super Admin.
     'academic.read',
     'students.read', 'students.search', 'guardians.read', 'guardians.search',
-    'fees.read', 'fees.manage_structures', 'fees.generate_invoices',
+    'fees.read', 'fees.read_own', 'fees.manage_structures', 'fees.generate_invoices',
     'fees.collect', 'fees.manage_discounts', 'fees.manage_installments',
     'fees.read_defaulters', 'fees.send_reminders', 'fees.read_collection_report',
     'fees.reprint_receipt', 'fees.carry_forward',
@@ -97,6 +101,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'settings.read',
     'staff.read_own',
     'leave.read_own', 'leave.request',
+    // Runs payroll; does not approve or hold the override codes — the
+    // Principal's entry names this same segregation.
+    'payroll.read', 'payroll.read_own', 'payroll.manage_structures',
+    'payroll.manage_salaries', 'payroll.run', 'payroll.adjust', 'payroll.mark_paid',
   ],
 
   Librarian: [
@@ -107,6 +115,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'students.read', 'students.search',
     'staff.read_own',
     'leave.read_own', 'leave.request',
+    'payroll.read_own',
   ],
 
   Guardian: [
@@ -114,11 +123,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     // confines it to their own children.
     'fees.read_own',
     'leave.request', 'leave.read_own',
+    'exams.read_own',
   ],
 
   Student: [
     'fees.read_own',
     'leave.read_own',
+    'exams.read_own',
   ],
 };
 

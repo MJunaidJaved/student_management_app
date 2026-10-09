@@ -89,6 +89,18 @@ export const VOUCHER_TYPES = ['receipt', 'payment', 'journal'] as const;
 /** `vouchers.status` */
 export const VOUCHER_STATUSES = ['draft', 'posted'] as const;
 
+/** `salary_components.type` and `payslip_items.type` */
+export const SALARY_COMPONENT_TYPES = ['earning', 'deduction'] as const;
+
+/** `salary_components.calc_type` */
+export const SALARY_COMPONENT_CALC_TYPES = ['fixed', 'percent'] as const;
+
+/** `payroll_runs.status` — the state machine in Module 8. */
+export const PAYROLL_RUN_STATUSES = ['draft', 'approved', 'paid'] as const;
+
+/** `student_promotions.action` */
+export const PROMOTION_ACTIONS = ['promoted', 'detained', 'graduated'] as const;
+
 export type Gender = (typeof GENDERS)[number];
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
@@ -101,6 +113,10 @@ export type StudentAttendanceStatus = (typeof STUDENT_ATTENDANCE_STATUSES)[numbe
 export type StaffAttendanceStatus = (typeof STAFF_ATTENDANCE_STATUSES)[number];
 export type LeaveStatus = (typeof LEAVE_STATUSES)[number];
 export type LeaveApplicantType = (typeof LEAVE_APPLICANT_TYPES)[number];
+export type SalaryComponentType = (typeof SALARY_COMPONENT_TYPES)[number];
+export type SalaryComponentCalcType = (typeof SALARY_COMPONENT_CALC_TYPES)[number];
+export type PayrollRunStatus = (typeof PAYROLL_RUN_STATUSES)[number];
+export type PromotionAction = (typeof PROMOTION_ACTIONS)[number];
 
 /**
  * Allowed transitions for the admission workflow (Part 4.6, State pattern).
@@ -145,6 +161,19 @@ export const LEAVE_TRANSITIONS: Readonly<Record<LeaveStatus, readonly LeaveStatu
   approved: ['cancelled'],
   rejected: [],
   cancelled: [],
+};
+
+/**
+ * Allowed transitions for a payroll run (Module 8).
+ *
+ * Linear and one-way: there is no "un-approve" or "un-pay". A mistake found
+ * after approval is corrected by adjusting the next run, not by reopening a
+ * finalized one — the same reasoning Section 3 applied to a posted voucher.
+ */
+export const PAYROLL_RUN_TRANSITIONS: Readonly<Record<PayrollRunStatus, readonly PayrollRunStatus[]>> = {
+  draft: ['approved'],
+  approved: ['paid'],
+  paid: [],
 };
 
 /** True when `to` is reachable from `from`. */

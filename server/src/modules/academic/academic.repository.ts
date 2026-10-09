@@ -267,6 +267,21 @@ export class SectionRepository extends BaseRepository<SectionRow> {
   }
 
   /**
+   * Active enrollment count for a specific year, not necessarily the one
+   * flagged `is_current`. `currentStrength` is right for enrolling into
+   * *this* year; promotion deliberately targets next year, before anyone
+   * has flipped the current-year flag over to it, so it needs this instead.
+   */
+  async strengthForYear(uow: Uow, sectionId: string, academicYearId: string): Promise<number> {
+    const row = await uow.one<{ n: number }>(
+      `SELECT count(*)::int AS n FROM student_enrollments
+        WHERE section_id = $1 AND academic_year_id = $2 AND status = 'active'`,
+      [sectionId, academicYearId],
+    );
+    return row.n;
+  }
+
+  /**
    * Lock a section row.
    *
    * Taken before assigning a roll number, so two concurrent enrolments into the

@@ -15,8 +15,21 @@
  * and guardian (every FK on that chain is RESTRICT). fees.api.test.ts's own
  * fixtures are therefore never cleaned up; they are excluded here by their
  * known, literal identity (the same fixed names that test uses every run),
- * not by weakening the check for anything else. A row in these tables that
- * does not match one of these patterns still fails the run.
+ * not by weakening the check for anything else.
+ *
+ * exams.api.test.ts's 'Exam Guardian' is a narrower instance of the same
+ * problem: `users_check` requires a guardian-type user's `guardian_id` to
+ * stay non-null, so a guardian with a login attached can be reassigned but
+ * never unlinked, which means it can never be deleted either. Each run
+ * leaves one more such row — harmless, since nothing else depends on it.
+ *
+ * payroll.api.test.ts's 'Payroll Staff One' is the same shape again, one
+ * level over: `guard_payslips` makes a payslip immutable once its run
+ * leaves `draft`, which blocks deleting the payslip, which blocks deleting
+ * the staff member it belongs to (`payslips.staff_id` is RESTRICT).
+ *
+ * A row in these tables that does not match one of these patterns still
+ * fails the run.
  */
 
 import { closePool, withClient } from '../db/pool';
@@ -24,8 +37,9 @@ import { closePool, withClient } from '../db/pool';
 const PROTECTED_TABLES = ['students', 'guardians', 'staff', 'payments'] as const;
 
 const KNOWN_PERMANENT_TEST_FIXTURES: Partial<Record<(typeof PROTECTED_TABLES)[number], string>> = {
-  guardians: `full_name = 'Fee Guardian'`,
+  guardians: `full_name IN ('Fee Guardian', 'Exam Guardian')`,
   students: `first_name = 'Fee' AND last_name = 'Payer'`,
+  staff: `full_name = 'Payroll Staff One'`,
   payments: `guardian_id IN (SELECT id FROM guardians WHERE full_name = 'Fee Guardian')`,
 };
 

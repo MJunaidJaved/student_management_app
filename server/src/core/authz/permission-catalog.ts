@@ -175,6 +175,7 @@ const fees = define('fees', [
 const exams = define('exams', [
   ['read', 'View exams, schedules and results within your scope'],
   ['read_all', 'View every exam and result'],
+  ['read_own', 'View your own or your children’s published report cards'],
   ['manage', 'Create and edit exam types, exams and schedules'],
   ['enter_marks', 'Enter marks for your assigned subjects'],
   ['enter_marks_override', 'Enter marks for any subject or section', true],
@@ -227,6 +228,19 @@ const accounting = define('accounting', [
   ['post', 'Post a draft voucher, freezing it', true],
 ]);
 
+/* ---------------- Module 8: payroll ---------------- */
+
+const payroll = define('payroll', [
+  ['read', 'View salary structures, staff salary assignments and payroll runs'],
+  ['read_own', 'View your own payslips'],
+  ['manage_structures', 'Create and edit salary structures and salary components'],
+  ['manage_salaries', 'Assign and edit a staff member’s salary', true],
+  ['run', 'Create and calculate a payroll run'],
+  ['adjust', 'Add a manual adjustment to a payslip before approval', true],
+  ['approve', 'Approve a payroll run', true],
+  ['mark_paid', 'Mark an approved payroll run as paid', true],
+]);
+
 /** Every permission in the system. */
 export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...users, ...roles, ...permissions, ...audit, ...settings,
@@ -238,6 +252,7 @@ export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...accounting,
   ...exams,
   ...staff,
+  ...payroll,
 ];
 
 /** Fast membership checks, and the guard behind `requirePermission`. */

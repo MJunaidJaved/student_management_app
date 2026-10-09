@@ -76,6 +76,27 @@ import {
   VoucherEntryRepository,
 } from './modules/accounting/accounting.repository';
 import { AccountingService } from './modules/accounting/accounting.service';
+import {
+  ExamTypeRepository,
+  ExamRepository,
+  ExamScheduleRepository,
+  MarkRepository,
+  GradingScaleRepository,
+  GradingScaleRangeRepository,
+  ReportCardRepository,
+} from './modules/exams/exams.repository';
+import { ExamsService } from './modules/exams/exams.service';
+import { StudentPromotionRepository } from './modules/promotions/promotions.repository';
+import { PromotionsService } from './modules/promotions/promotions.service';
+import {
+  SalaryComponentRepository,
+  SalaryStructureRepository,
+  StaffSalaryRepository,
+  PayrollRunRepository,
+  PayslipRepository,
+  PayslipItemRepository,
+} from './modules/payroll/payroll.repository';
+import { PayrollService } from './modules/payroll/payroll.service';
 
 export type Container = {
   cache: CacheStore;
@@ -121,6 +142,20 @@ export type Container = {
     bankAccounts: BankAccountRepository;
     vouchers: VoucherRepository;
     voucherEntries: VoucherEntryRepository;
+    examTypes: ExamTypeRepository;
+    exams: ExamRepository;
+    examSchedules: ExamScheduleRepository;
+    marks: MarkRepository;
+    gradingScales: GradingScaleRepository;
+    gradingScaleRanges: GradingScaleRangeRepository;
+    reportCards: ReportCardRepository;
+    studentPromotions: StudentPromotionRepository;
+    salaryComponents: SalaryComponentRepository;
+    salaryStructures: SalaryStructureRepository;
+    staffSalaries: StaffSalaryRepository;
+    payrollRuns: PayrollRunRepository;
+    payslips: PayslipRepository;
+    payslipItems: PayslipItemRepository;
   };
   services: {
     auth: AuthService;
@@ -135,6 +170,9 @@ export type Container = {
     timetable: TimetableService;
     notifications: NotificationService;
     fees: FeesService;
+    exams: ExamsService;
+    promotions: PromotionsService;
+    payroll: PayrollService;
     accounting: AccountingService;
   };
 };
@@ -211,6 +249,21 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const voucherEntriesRepo = new VoucherEntryRepository();
   const accountingService = new AccountingService(accountHeadsRepo, bankAccountsRepo, vouchersRepo, voucherEntriesRepo);
 
+  const examTypesRepo = new ExamTypeRepository();
+  const examsRepo = new ExamRepository();
+  const examSchedulesRepo = new ExamScheduleRepository();
+  const marksRepo = new MarkRepository();
+  const gradingScalesRepo = new GradingScaleRepository();
+  const gradingScaleRangesRepo = new GradingScaleRangeRepository();
+  const reportCardsRepo = new ReportCardRepository();
+  const studentPromotionsRepo = new StudentPromotionRepository();
+  const salaryComponentsRepo = new SalaryComponentRepository();
+  const salaryStructuresRepo = new SalaryStructureRepository();
+  const staffSalariesRepo = new StaffSalaryRepository();
+  const payrollRunsRepo = new PayrollRunRepository();
+  const payslipsRepo = new PayslipRepository();
+  const payslipItemsRepo = new PayslipItemRepository();
+
   const studentPolicy = new StudentPolicy(cache, permissions);
   const sectionPolicy = new SectionPolicy(cache, permissions);
   const staffPolicy = new StaffPolicy(cache, permissions);
@@ -260,6 +313,20 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       bankAccounts: bankAccountsRepo,
       vouchers: vouchersRepo,
       voucherEntries: voucherEntriesRepo,
+      examTypes: examTypesRepo,
+      exams: examsRepo,
+      examSchedules: examSchedulesRepo,
+      marks: marksRepo,
+      gradingScales: gradingScalesRepo,
+      gradingScaleRanges: gradingScaleRangesRepo,
+      reportCards: reportCardsRepo,
+      studentPromotions: studentPromotionsRepo,
+      salaryComponents: salaryComponentsRepo,
+      salaryStructures: salaryStructuresRepo,
+      staffSalaries: staffSalariesRepo,
+      payrollRuns: payrollRunsRepo,
+      payslips: payslipsRepo,
+      payslipItems: payslipItemsRepo,
     },
     services: {
       auth: new AuthService(authRepository, permissions, denylist),
@@ -334,6 +401,20 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         accountingService,
         cache,
       ),
+      exams: new ExamsService(
+        examTypesRepo,
+        examsRepo,
+        examSchedulesRepo,
+        marksRepo,
+        gradingScalesRepo,
+        gradingScaleRangesRepo,
+        reportCardsRepo,
+        classSubjects,
+        rooms,
+        permissions,
+      ),
+      promotions: new PromotionsService(studentPromotionsRepo, enrollmentsRepo, studentsRepo, sections),
+      payroll: new PayrollService(salaryComponentsRepo, salaryStructuresRepo, staffSalariesRepo, payrollRunsRepo, payslipsRepo, payslipItemsRepo, staffRepo, permissions),
       accounting: accountingService,
     },
   };
