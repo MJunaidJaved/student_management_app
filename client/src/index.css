@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-brand-50: #f2f0ff;
+  --color-brand-100: #e5e1ff;
+  --color-brand-200: #cbc3ff;
+  --color-brand-300: #a99bff;
+  --color-brand-400: #8a76ff;
+  --color-brand-500: #6c56f9;
+  --color-brand-600: #5a3fe0;
+  --color-brand-700: #4a32b8;
+  --color-brand-800: #3b2890;
+  --color-brand-900: #2e2070;
+
+  /* Surface / neutral */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f7fb;
+  --color-border: #e8e9f1;
+  --color-ink: #1a1b2e;
+  --color-ink-muted: #6b6d80;
+  --color-ink-subtle: #9496a8;
+
+  /* Status */
+  --color-success-50: #e9faf1;
+  --color-success-500: #1fbf75;
+  --color-success-600: #17a364;
+  --color-warning-50: #fff7e6;
+  --color-warning-500: #f5a623;
+  --color-warning-600: #d88c0f;
+  --color-danger-50: #fdeeee;
+  --color-danger-500: #e5484d;
+  --color-danger-600: #c73a3f;
+  --color-info-50: #eaf3ff;
+  --color-info-500: #3d8bfd;
+  --color-info-600: #2f6fd1;
+
+  /* Stat-card accents (match the reference dashboard cards) */
+  --color-accent-blue: #4f7dfb;
+  --color-accent-red: #f1626c;
+  --color-accent-purple: #9b6cf6;
+  --color-accent-orange: #f6a84f;
+
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgba(26, 27, 46, 0.04), 0 8px 24px rgba(26, 27, 46, 0.06);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-surface: #1a1b2e;
+    --color-surface-muted: #15162440;
+    --color-border: #2c2e45;
+    --color-ink: #f3f3f8;
+    --color-ink-muted: #a7a9bd;
+    --color-ink-subtle: #777a93;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-surface: #1a1b2e;
+  --color-surface-muted: #15162440;
+  --color-border: #2c2e45;
+  --color-ink: #f3f3f8;
+  --color-ink-muted: #a7a9bd;
+  --color-ink-subtle: #777a93;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
