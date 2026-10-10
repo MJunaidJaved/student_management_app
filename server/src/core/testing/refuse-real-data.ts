@@ -28,6 +28,12 @@
  * leaves `draft`, which blocks deleting the payslip, which blocks deleting
  * the staff member it belongs to (`payslips.staff_id` is RESTRICT).
  *
+ * library.api.test.ts's '__apitest Linked Guardian' and '__apitest Unrelated
+ * Guardian', and transport.api.test.ts's '__apitest Transport Linked
+ * Guardian' / '__apitest Transport Unrelated Guardian', are the same
+ * `users_check` shape once more — each attached to a login to prove an
+ * ownership check actually discriminates between them.
+ *
  * A row in these tables that does not match one of these patterns still
  * fails the run.
  */
@@ -37,7 +43,7 @@ import { closePool, withClient } from '../db/pool';
 const PROTECTED_TABLES = ['students', 'guardians', 'staff', 'payments'] as const;
 
 const KNOWN_PERMANENT_TEST_FIXTURES: Partial<Record<(typeof PROTECTED_TABLES)[number], string>> = {
-  guardians: `full_name IN ('Fee Guardian', 'Exam Guardian')`,
+  guardians: `full_name IN ('Fee Guardian', 'Exam Guardian', '__apitest Linked Guardian', '__apitest Unrelated Guardian', '__apitest Transport Linked Guardian', '__apitest Transport Unrelated Guardian')`,
   students: `first_name = 'Fee' AND last_name = 'Payer'`,
   staff: `full_name = 'Payroll Staff One'`,
   payments: `guardian_id IN (SELECT id FROM guardians WHERE full_name = 'Fee Guardian')`,
