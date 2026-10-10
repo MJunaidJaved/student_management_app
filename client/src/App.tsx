@@ -10,6 +10,9 @@ import { ComingSoonPage } from '@/pages/coming-soon'
 import { StudentsListPage } from '@/pages/students/students-list'
 import { StudentCreatePage } from '@/pages/students/student-create'
 import { StudentDetailPage } from '@/pages/students/student-detail'
+import { StaffListPage } from '@/pages/staff/staff-list'
+import { StaffCreatePage } from '@/pages/staff/staff-create'
+import { StaffDetailPage } from '@/pages/staff/staff-detail'
 import { NAV_GROUPS } from '@/lib/nav-config'
 
 const queryClient = new QueryClient({
@@ -25,9 +28,8 @@ const queryClient = new QueryClient({
 // Every nav item except Dashboard and Students (built out below) gets a
 // placeholder route for now, so the full navigation is browsable rather
 // than dead links — built out module by module in later passes.
-const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter(
-  (item) => item.path !== '/' && item.path !== '/students',
-)
+const builtPaths = new Set(['/', '/students', '/staff'])
+const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter((item) => !builtPaths.has(item.path))
 
 export default function App() {
   return (
@@ -45,6 +47,10 @@ export default function App() {
                   <Route path="/students" element={<StudentsListPage />} />
                   <Route path="/students/new" element={<StudentCreatePage />} />
                   <Route path="/students/:id" element={<StudentDetailPage />} />
+
+                  <Route path="/staff" element={<StaffListPage />} />
+                  <Route path="/staff/new" element={<StaffCreatePage />} />
+                  <Route path="/staff/:id" element={<StaffDetailPage />} />
 
                   {placeholderRoutes.map((item) => (
                     <Route key={item.path} path={item.path} element={<ComingSoonPage title={item.label} />} />
