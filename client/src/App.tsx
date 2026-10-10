@@ -25,6 +25,7 @@ import { PayrollPage } from '@/pages/payroll/payroll-page'
 import { RunDetailPage } from '@/pages/payroll/run-detail'
 import { InventoryPage } from '@/pages/inventory/inventory-page'
 import { PoDetailPage } from '@/pages/inventory/po-detail'
+import { LibraryPage } from '@/pages/library/library-page'
 import { NAV_GROUPS } from '@/lib/nav-config'
 
 const queryClient = new QueryClient({
@@ -40,7 +41,7 @@ const queryClient = new QueryClient({
 // Every nav item except Dashboard and Students (built out below) gets a
 // placeholder route for now, so the full navigation is browsable rather
 // than dead links — built out module by module in later passes.
-const builtPaths = new Set(['/', '/students', '/staff', '/academic', '/fees', '/attendance', '/leave', '/timetable', '/exams', '/payroll', '/inventory'])
+const builtPaths = new Set(['/', '/students', '/staff', '/academic', '/fees', '/attendance', '/leave', '/timetable', '/exams', '/payroll', '/inventory', '/library'])
 const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter((item) => !builtPaths.has(item.path))
 
 export default function App() {
@@ -81,6 +82,8 @@ export default function App() {
 
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/inventory/purchase-orders/:id" element={<PoDetailPage />} />
+
+                  <Route path="/library" element={<LibraryPage />} />
 
                   {placeholderRoutes.map((item) => (
                     <Route key={item.path} path={item.path} element={<ComingSoonPage title={item.label} />} />
