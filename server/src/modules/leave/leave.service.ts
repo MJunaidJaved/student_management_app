@@ -38,6 +38,11 @@ import {
   type StaffLeaveBalanceRow,
 } from './leave.repository';
 
+export type LeaveTypeView = { id: string; name: string; appliesTo: string; daysPerYear: number | null };
+function toLeaveTypeView(row: LeaveTypeRow): LeaveTypeView {
+  return { id: row.id, name: row.name, appliesTo: row.applies_to, daysPerYear: row.days_per_year };
+}
+
 export type StaffLeaveBalanceView = {
   id: string;
   staffId: string;
@@ -115,13 +120,13 @@ export class LeaveService {
 
   /* ---------------- leave types ---------------- */
 
-  async listLeaveTypes(actor: Actor): Promise<LeaveTypeRow[]> {
-    return readTransaction(actor, (uow) => this.leaveTypes.listAll(uow));
+  async listLeaveTypes(actor: Actor): Promise<LeaveTypeView[]> {
+    return readTransaction(actor, async (uow) => (await this.leaveTypes.listAll(uow)).map(toLeaveTypeView));
   }
 
-  async createLeaveType(actor: Actor, input: { name: string; appliesTo: string; daysPerYear?: number | null | undefined }): Promise<LeaveTypeRow> {
-    return transaction(actor, (uow) =>
-      this.leaveTypes.create(uow, { name: input.name, applies_to: input.appliesTo, days_per_year: input.daysPerYear ?? null }),
+  async createLeaveType(actor: Actor, input: { name: string; appliesTo: string; daysPerYear?: number | null | undefined }): Promise<LeaveTypeView> {
+    return transaction(actor, async (uow) =>
+      toLeaveTypeView(await this.leaveTypes.create(uow, { name: input.name, applies_to: input.appliesTo, days_per_year: input.daysPerYear ?? null })),
     );
   }
 
@@ -129,9 +134,9 @@ export class LeaveService {
     actor: Actor,
     id: string,
     input: { name?: string | undefined; appliesTo?: string | undefined; daysPerYear?: number | null | undefined },
-  ): Promise<LeaveTypeRow> {
-    return transaction(actor, (uow) =>
-      this.leaveTypes.update(uow, id, { name: input.name, applies_to: input.appliesTo, days_per_year: input.daysPerYear }),
+  ): Promise<LeaveTypeView> {
+    return transaction(actor, async (uow) =>
+      toLeaveTypeView(await this.leaveTypes.update(uow, id, { name: input.name, applies_to: input.appliesTo, days_per_year: input.daysPerYear })),
     );
   }
 

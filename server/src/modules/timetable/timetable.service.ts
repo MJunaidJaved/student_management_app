@@ -22,6 +22,11 @@ import {
   type SubstitutionRow,
 } from './timetable.repository';
 
+export type PeriodView = { id: string; name: string; startTime: string; endTime: string; sortOrder: number };
+function toPeriodView(r: PeriodRow): PeriodView {
+  return { id: r.id, name: r.name, startTime: r.start_time, endTime: r.end_time, sortOrder: r.sort_order };
+}
+
 export type TimetableEntryView = {
   id: string;
   academicYearId: string;
@@ -96,19 +101,19 @@ export class TimetableService {
 
   /* ---------------- periods ---------------- */
 
-  async listPeriods(actor: Actor): Promise<PeriodRow[]> {
-    return readTransaction(actor, (uow) => this.periods.listAll(uow));
+  async listPeriods(actor: Actor): Promise<PeriodView[]> {
+    return readTransaction(actor, async (uow) => (await this.periods.listAll(uow)).map(toPeriodView));
   }
 
-  async createPeriod(actor: Actor, input: { name: string; startTime: string; endTime: string; sortOrder: number }): Promise<PeriodRow> {
-    return transaction(actor, (uow) =>
-      this.periods.create(uow, { name: input.name, start_time: input.startTime, end_time: input.endTime, sort_order: input.sortOrder }),
+  async createPeriod(actor: Actor, input: { name: string; startTime: string; endTime: string; sortOrder: number }): Promise<PeriodView> {
+    return transaction(actor, async (uow) =>
+      toPeriodView(await this.periods.create(uow, { name: input.name, start_time: input.startTime, end_time: input.endTime, sort_order: input.sortOrder })),
     );
   }
 
-  async updatePeriod(actor: Actor, id: string, input: { name?: string | undefined; startTime?: string | undefined; endTime?: string | undefined; sortOrder?: number | undefined }): Promise<PeriodRow> {
-    return transaction(actor, (uow) =>
-      this.periods.update(uow, id, { name: input.name, start_time: input.startTime, end_time: input.endTime, sort_order: input.sortOrder }),
+  async updatePeriod(actor: Actor, id: string, input: { name?: string | undefined; startTime?: string | undefined; endTime?: string | undefined; sortOrder?: number | undefined }): Promise<PeriodView> {
+    return transaction(actor, async (uow) =>
+      toPeriodView(await this.periods.update(uow, id, { name: input.name, start_time: input.startTime, end_time: input.endTime, sort_order: input.sortOrder })),
     );
   }
 

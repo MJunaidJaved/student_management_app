@@ -138,8 +138,53 @@ describe('Staff and HR API', () => {
       body: { name: 'Lab Assistant', departmentId },
     });
     expect(res.status).toBe(201);
+    expect(res.body.data.departmentId).toBe(departmentId);
     designationId = res.body.data.id;
     made.designations.push(designationId);
+  });
+
+  it('lists departments, including the one just created', async () => {
+    const res = await call('/api/v1/departments');
+    expect(res.status).toBe(200);
+    expect(res.body.data.departments.some((d: { id: string }) => d.id === departmentId)).toBe(true);
+  });
+
+  it('renames a department', async () => {
+    const res = await call(`/api/v1/departments/${departmentId}`, { method: 'PATCH', body: { name: 'Natural Sciences' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.name).toBe('Natural Sciences');
+  });
+
+  it('lists designations, including the one just created', async () => {
+    const res = await call('/api/v1/designations');
+    expect(res.status).toBe(200);
+    expect(res.body.data.designations.some((d: { id: string }) => d.id === designationId)).toBe(true);
+  });
+
+  it('edits a designation', async () => {
+    const res = await call(`/api/v1/designations/${designationId}`, { method: 'PATCH', body: { name: 'Senior Lab Assistant' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.name).toBe('Senior Lab Assistant');
+  });
+
+  it('deletes a department and designation that have no staff attached', async () => {
+    const dept = await call('/api/v1/departments', { method: 'POST', body: { name: '__apitest Disposable Dept' } });
+    expect(dept.status).toBe(201);
+    const desig = await call('/api/v1/designations', { method: 'POST', body: { name: '__apitest Disposable Role', departmentId: dept.body.data.id } });
+    expect(desig.status).toBe(201);
+
+    const deletedDesig = await call(`/api/v1/designations/${desig.body.data.id}`, { method: 'DELETE' });
+    expect(deletedDesig.status).toBe(204);
+    const deletedDept = await call(`/api/v1/departments/${dept.body.data.id}`, { method: 'DELETE' });
+    expect(deletedDept.status).toBe(204);
+
+    const listed = await call('/api/v1/departments');
+    expect(listed.body.data.departments.some((d: { id: string }) => d.id === dept.body.data.id)).toBe(false);
+  });
+
+  it('denies managing departments to a caller without staff.manage_departments', async () => {
+    const res = await call('/api/v1/departments', { token: teacherToken, method: 'POST', body: { name: 'Should Not Be Created' } });
+    expect(res.status).toBe(403);
   });
 
   it('rejects an invalid gender at validation, before touching the database', async () => {

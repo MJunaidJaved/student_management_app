@@ -351,6 +351,38 @@ describe('Fees API', () => {
     expect(invoice.body.data.total).toBe(tuitionItem.amount);
   });
 
+  it('a percentage discount rounds half-up at the stored two-decimal scale, independently of the item amount', async () => {
+    // 100.05 * 10% = 10.005 exactly, which ROUND_HALF_UP must take to 10.01,
+    // not 10.00 — a boundary a naive float calculation (or round-half-even)
+    // would get wrong. Chosen specifically to exercise that boundary rather
+    // than a clean, suspiciously round number.
+    const roundingCategoryId = await findOrCreateFeeCategory('__apitest_fees_rounding__', 'monthly', incomeHeadId);
+    await transaction(SYSTEM_ACTOR, async (uow) => {
+      await uow.count(`DELETE FROM fee_structures WHERE fee_category_id = $1 AND class_id = $2 AND academic_year_id = $3`, [roundingCategoryId, classId, yearId]);
+    });
+    await call('/api/v1/fee-structures', { method: 'POST', body: { academicYearId: yearId, classId, feeCategoryId: roundingCategoryId, amount: '100.05' } });
+
+    await transaction(SYSTEM_ACTOR, async (uow) => {
+      await uow.count(`DELETE FROM student_discounts WHERE discount_id IN (SELECT id FROM discounts WHERE name = $1)`, ['__test rounding discount']);
+      await uow.count(`DELETE FROM discounts WHERE name = $1`, ['__test rounding discount']);
+    });
+    const discount = await call('/api/v1/discounts', { method: 'POST', body: { name: '__test rounding discount', type: 'percent', value: '10' } });
+    made.discounts.push(discount.body.data.id);
+    await call('/api/v1/student-discounts', { method: 'POST', body: { enrollmentId, discountId: discount.body.data.id, feeCategoryId: roundingCategoryId, validFrom: '2026-06-01' } });
+
+    const res = await call('/api/v1/invoices', { method: 'POST', body: { enrollmentId, billingPeriod: '2026-06', issueDate: '2026-06-01', dueDate: '2026-06-10' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const invoice = await call(`/api/v1/invoices/${res.body.data.invoice.id}`);
+    // Asserted at the line-item level, not the invoice total: this
+    // enrollment's invoice also carries the tuition and exam structures
+    // from earlier tests in this file, so the total is their sum, not this
+    // category's alone. The rounding behavior under test lives entirely in
+    // discountAmount.
+    const roundingItem = invoice.body.data.items.find((i: { feeCategoryId: string }) => i.feeCategoryId === roundingCategoryId);
+    expect(roundingItem.amount).toBe('100.05');
+    expect(roundingItem.discountAmount).toBe('10.01');
+  });
+
   it('bulk-generates for the whole class, skipping enrollments already invoiced for that period', async () => {
     const res = await call('/api/v1/invoices/bulk-generate', { method: 'POST', body: { academicYearId: yearId, classId, billingPeriod: '2026-03', issueDate: '2026-03-01', dueDate: '2026-03-10' } });
     expect(res.status).toBe(200);

@@ -35,6 +35,7 @@ import {
   assertYearOpen,
   type AcademicYearRow,
   type ClassRow,
+  type ClassSubjectRow,
   type RoomRow,
   type SectionWithStrength,
   type SubjectRow,
@@ -57,6 +58,31 @@ const toYearView = (r: AcademicYearRow): YearView => ({
   endDate: r.end_date,
   isCurrent: r.is_current,
   isClosed: r.is_closed,
+});
+
+export type TermView = { id: string; academicYearId: string; name: string; startDate: string; endDate: string };
+const toTermView = (r: TermRow): TermView => ({
+  id: r.id, academicYearId: r.academic_year_id, name: r.name, startDate: r.start_date, endDate: r.end_date,
+});
+
+export type ClassView = { id: string; name: string; levelOrder: number };
+const toClassView = (r: ClassRow): ClassView => ({ id: r.id, name: r.name, levelOrder: r.level_order });
+
+export type SectionView = {
+  id: string; classId: string; name: string; capacity: number; classTeacherId: string | null;
+  className: string; strength: number; classTeacherName: string | null;
+};
+const toSectionView = (r: SectionWithStrength): SectionView => ({
+  id: r.id, classId: r.class_id, name: r.name, capacity: r.capacity, classTeacherId: r.class_teacher_id,
+  className: r.class_name, strength: r.strength, classTeacherName: r.class_teacher_name,
+});
+
+export type RoomView = { id: string; name: string; capacity: number | null; roomType: string };
+const toRoomView = (r: RoomRow): RoomView => ({ id: r.id, name: r.name, capacity: r.capacity, roomType: r.room_type });
+
+export type ClassSubjectView = { id: string; classId: string; subjectId: string; isMandatory: boolean; subjectName: string; subjectCode: string };
+const toClassSubjectView = (r: ClassSubjectRow & { subject_name: string; subject_code: string }): ClassSubjectView => ({
+  id: r.id, classId: r.class_id, subjectId: r.subject_id, isMandatory: r.is_mandatory, subjectName: r.subject_name, subjectCode: r.subject_code,
 });
 
 export class AcademicService {
@@ -260,14 +286,14 @@ export class AcademicService {
 
   /* ---------------- terms ---------------- */
 
-  async listTerms(actor: Actor, yearId: string): Promise<TermRow[]> {
-    return readTransaction(actor, (uow) => this.terms.listForYear(uow, yearId));
+  async listTerms(actor: Actor, yearId: string): Promise<TermView[]> {
+    return readTransaction(actor, async (uow) => (await this.terms.listForYear(uow, yearId)).map(toTermView));
   }
 
   async createTerm(
     actor: Actor,
     input: { academicYearId: string; name: string; startDate: string; endDate: string },
-  ): Promise<TermRow> {
+  ): Promise<TermView> {
     return transaction(actor, async (uow) => {
       await assertYearOpen(uow, input.academicYearId);
       const year = await this.years.getById(uow, input.academicYearId);
@@ -295,24 +321,24 @@ export class AcademicService {
         );
       }
 
-      return this.terms.create(uow, {
+      return toTermView(await this.terms.create(uow, {
         academic_year_id: input.academicYearId,
         name: input.name,
         start_date: input.startDate,
         end_date: input.endDate,
-      });
+      }));
     });
   }
 
   /* ---------------- classes ---------------- */
 
-  async listClasses(actor: Actor): Promise<ClassRow[]> {
-    return readTransaction(actor, (uow) => this.classes.listAll(uow));
+  async listClasses(actor: Actor): Promise<ClassView[]> {
+    return readTransaction(actor, async (uow) => (await this.classes.listAll(uow)).map(toClassView));
   }
 
-  async createClass(actor: Actor, input: { name: string; levelOrder: number }): Promise<ClassRow> {
-    return transaction(actor, (uow) =>
-      this.classes.create(uow, { name: input.name, level_order: input.levelOrder }),
+  async createClass(actor: Actor, input: { name: string; levelOrder: number }): Promise<ClassView> {
+    return transaction(actor, async (uow) =>
+      toClassView(await this.classes.create(uow, { name: input.name, level_order: input.levelOrder })),
     );
   }
 
@@ -320,9 +346,9 @@ export class AcademicService {
     actor: Actor,
     id: string,
     input: { name?: string | undefined; levelOrder?: number | undefined },
-  ): Promise<ClassRow> {
-    return transaction(actor, (uow) =>
-      this.classes.update(uow, id, { name: input.name, level_order: input.levelOrder }),
+  ): Promise<ClassView> {
+    return transaction(actor, async (uow) =>
+      toClassView(await this.classes.update(uow, id, { name: input.name, level_order: input.levelOrder })),
     );
   }
 
@@ -342,8 +368,8 @@ export class AcademicService {
 
   /* ---------------- sections ---------------- */
 
-  async listSections(actor: Actor, classId?: string): Promise<SectionWithStrength[]> {
-    return readTransaction(actor, (uow) => this.sections.listWithStrength(uow, classId));
+  async listSections(actor: Actor, classId?: string): Promise<SectionView[]> {
+    return readTransaction(actor, async (uow) => (await this.sections.listWithStrength(uow, classId)).map(toSectionView));
   }
 
   async createSection(
@@ -354,7 +380,7 @@ export class AcademicService {
       capacity: number;
       classTeacherId?: string | null | undefined;
     },
-  ): Promise<SectionWithStrength> {
+  ): Promise<SectionView> {
     return transaction(actor, async (uow) => {
       // Validated here for a friendly message; the FK is the real guard.
       await this.classes.getById(uow, input.classId);
@@ -371,7 +397,7 @@ export class AcademicService {
       const withStrength = await this.sections.listWithStrength(uow, input.classId);
       const found = withStrength.find((s) => s.id === row.id);
       if (!found) throw new NotFoundError('Section');
-      return found;
+      return toSectionView(found);
     });
   }
 
@@ -383,7 +409,7 @@ export class AcademicService {
       capacity?: number | undefined;
       classTeacherId?: string | null | undefined;
     },
-  ): Promise<SectionWithStrength> {
+  ): Promise<SectionView> {
     const result = await transaction(actor, async (uow) => {
       const existing = await this.sections.getById(uow, id);
 
@@ -410,7 +436,7 @@ export class AcademicService {
       const list = await this.sections.listWithStrength(uow, existing.class_id);
       const found = list.find((s) => s.id === id);
       if (!found) throw new NotFoundError('Section');
-      return { section: found, teacherChanged };
+      return { section: toSectionView(found), teacherChanged };
     });
 
     // A class teacher change alters that teacher's authorization scope.
@@ -433,19 +459,19 @@ export class AcademicService {
     );
   }
 
-  async listClassSubjects(actor: Actor, classId: string) {
-    return readTransaction(actor, (uow) => this.classSubjects.listForClass(uow, classId));
+  async listClassSubjects(actor: Actor, classId: string): Promise<ClassSubjectView[]> {
+    return readTransaction(actor, async (uow) => (await this.classSubjects.listForClass(uow, classId)).map(toClassSubjectView));
   }
 
   async setClassSubjects(
     actor: Actor,
     classId: string,
     entries: readonly { subjectId: string; isMandatory: boolean }[],
-  ) {
+  ): Promise<ClassSubjectView[]> {
     return transaction(actor, async (uow) => {
       await this.classes.getById(uow, classId);
       await this.classSubjects.setForClass(uow, classId, entries);
-      return this.classSubjects.listForClass(uow, classId);
+      return (await this.classSubjects.listForClass(uow, classId)).map(toClassSubjectView);
     });
   }
 
@@ -532,20 +558,20 @@ export class AcademicService {
 
   /* ---------------- rooms ---------------- */
 
-  async listRooms(actor: Actor): Promise<RoomRow[]> {
-    return readTransaction(actor, (uow) => this.rooms.listAll(uow));
+  async listRooms(actor: Actor): Promise<RoomView[]> {
+    return readTransaction(actor, async (uow) => (await this.rooms.listAll(uow)).map(toRoomView));
   }
 
   async createRoom(
     actor: Actor,
     input: { name: string; roomType: string; capacity?: number | null | undefined },
-  ): Promise<RoomRow> {
-    return transaction(actor, (uow) =>
-      this.rooms.create(uow, {
+  ): Promise<RoomView> {
+    return transaction(actor, async (uow) =>
+      toRoomView(await this.rooms.create(uow, {
         name: input.name,
         room_type: input.roomType,
         capacity: input.capacity ?? null,
-      }),
+      })),
     );
   }
 }

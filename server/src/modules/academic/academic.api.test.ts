@@ -193,6 +193,9 @@ describe('terms', () => {
       }),
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.academicYearId).toBe(yearId);
+    expect(res.body.data.startDate).toBe('2040-04-01');
+    expect(res.body.data.endDate).toBe('2040-09-30');
     made.terms.push(res.body.data.id);
   });
 
@@ -219,6 +222,7 @@ describe('classes, sections and capacity', () => {
       body: JSON.stringify({ name: '__test Class 9', levelOrder: 90 }),
     });
     expect(cls.status, JSON.stringify(cls.body)).toBe(201);
+    expect(cls.body.data.levelOrder).toBe(90);
     made.classes.push(cls.body.data.id);
 
     const section = await call('/api/v1/academic/sections', {
@@ -232,6 +236,7 @@ describe('classes, sections and capacity', () => {
     // sections listing exists to show.
     expect(section.body.data.strength).toBe(0);
     expect(section.body.data.capacity).toBe(30);
+    expect(section.body.data.classId).toBe(cls.body.data.id);
   });
 
   it('lists sections with strength against capacity', async () => {
@@ -239,7 +244,7 @@ describe('classes, sections and capacity', () => {
     expect(res.status).toBe(200);
     const section = res.body.data.sections.find((s: { id: string }) => s.id === made.sections[0]);
     expect(section.strength).toBe(0);
-    expect(section.class_name).toBe('__test Class 9');
+    expect(section.className).toBe('__test Class 9');
   });
 
   it('allows raising capacity', async () => {
@@ -291,7 +296,7 @@ describe('subjects and the class curriculum', () => {
     });
     expect(mapped.status, JSON.stringify(mapped.body)).toBe(200);
     expect(mapped.body.data.subjects).toHaveLength(1);
-    expect(mapped.body.data.subjects[0].subject_code).toBe('__TST');
+    expect(mapped.body.data.subjects[0].subjectCode).toBe('__TST');
   });
 
   it('rejects an invalid subject type against the database CHECK', async () => {
@@ -342,6 +347,7 @@ describe('rooms', () => {
       body: JSON.stringify({ name: '__test Lab 1', roomType: 'lab', capacity: 24 }),
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.roomType).toBe('lab');
     made.rooms.push(res.body.data.id);
   });
 

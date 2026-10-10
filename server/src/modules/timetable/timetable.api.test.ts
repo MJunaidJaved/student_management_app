@@ -134,6 +134,38 @@ describe('Timetable and substitutions API', () => {
     await call('/api/v1/academic/subject-teachers', { method: 'POST', body: { academicYearId: yearId, sectionId: sectionB, subjectId, staffId: teacherStaffId } });
   });
 
+  it('lists periods in sort order, camelCase, including the ones created for this suite', async () => {
+    const res = await call('/api/v1/periods');
+    expect(res.status).toBe(200);
+    const p1 = res.body.data.periods.find((p: { id: string }) => p.id === period1);
+    expect(p1).toBeDefined();
+    expect(p1.startTime).toBe('08:00:00');
+    expect(p1.endTime).toBe('08:45:00');
+    expect(p1.sortOrder).toBe(901);
+  });
+
+  it('edits a period', async () => {
+    const res = await call(`/api/v1/periods/${period2}`, { method: 'PATCH', body: { name: 'P2 renamed' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.name).toBe('P2 renamed');
+  });
+
+  it('deletes a period that has no timetable entries', async () => {
+    const created = await call('/api/v1/periods', { method: 'POST', body: { name: '__apitest disposable period', startTime: '15:00', endTime: '15:45', sortOrder: 999 } });
+    expect(created.status).toBe(201);
+    const id = created.body.data.id;
+
+    const deleted = await call(`/api/v1/periods/${id}`, { method: 'DELETE' });
+    expect(deleted.status).toBe(204);
+    const listed = await call('/api/v1/periods');
+    expect(listed.body.data.periods.some((p: { id: string }) => p.id === id)).toBe(false);
+  });
+
+  it('denies managing periods to a caller without timetable.manage_periods', async () => {
+    const res = await call('/api/v1/periods', { token: teacherToken, method: 'POST', body: { name: 'Should Not Be Created', startTime: '16:00', endTime: '16:45', sortOrder: 998 } });
+    expect(res.status).toBe(403);
+  });
+
   it('rejects a subject the class does not study', async () => {
     const otherSubject = await call('/api/v1/academic/subjects', { method: 'POST', body: { code: 'TT2', name: 'Unmapped Subject', type: 'core' } });
     made.subjects.push(otherSubject.body.data.id);

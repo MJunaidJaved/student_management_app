@@ -26,6 +26,9 @@ import {
   type StaffRow,
 } from './staff.repository';
 
+export type DesignationView = { id: string; name: string; departmentId: string | null };
+const toDesignationView = (r: DesignationRow): DesignationView => ({ id: r.id, name: r.name, departmentId: r.department_id });
+
 export type StaffView = {
   id: string;
   employeeNo: string;
@@ -117,16 +120,16 @@ export class StaffService {
 
   /* ---------------- designations ---------------- */
 
-  async listDesignations(actor: Actor): Promise<DesignationRow[]> {
-    return readTransaction(actor, (uow) => this.designations.listAll(uow));
+  async listDesignations(actor: Actor): Promise<DesignationView[]> {
+    return readTransaction(actor, async (uow) => (await this.designations.listAll(uow)).map(toDesignationView));
   }
 
   async createDesignation(
     actor: Actor,
     input: { name: string; departmentId?: string | null | undefined },
-  ): Promise<DesignationRow> {
-    return transaction(actor, (uow) =>
-      this.designations.create(uow, { name: input.name, department_id: input.departmentId ?? null }),
+  ): Promise<DesignationView> {
+    return transaction(actor, async (uow) =>
+      toDesignationView(await this.designations.create(uow, { name: input.name, department_id: input.departmentId ?? null })),
     );
   }
 
@@ -134,9 +137,9 @@ export class StaffService {
     actor: Actor,
     id: string,
     input: { name?: string | undefined; departmentId?: string | null | undefined },
-  ): Promise<DesignationRow> {
-    return transaction(actor, (uow) =>
-      this.designations.update(uow, id, { name: input.name, department_id: input.departmentId }),
+  ): Promise<DesignationView> {
+    return transaction(actor, async (uow) =>
+      toDesignationView(await this.designations.update(uow, id, { name: input.name, department_id: input.departmentId })),
     );
   }
 

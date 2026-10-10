@@ -175,6 +175,46 @@ describe('Exams API', () => {
     await call('/api/v1/grading-scale-ranges', { method: 'POST', body: { gradingScaleId: scaleId, minPercent: '0', maxPercent: '89.99', grade: 'B' } });
   });
 
+  it('lists grading scales, camelCase, including the default one for this suite', async () => {
+    const res = await call('/api/v1/grading-scales');
+    expect(res.status).toBe(200);
+    const scale = res.body.data.scales.find((s: { id: string }) => s.id === scaleId);
+    expect(scale).toBeDefined();
+    expect(scale.isDefault).toBe(true);
+  });
+
+  it("lists a grading scale's ranges in order", async () => {
+    const res = await call(`/api/v1/grading-scales/${scaleId}/ranges`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.ranges.length).toBe(2);
+    expect(res.body.data.ranges.some((r: { grade: string }) => r.grade === 'A+')).toBe(true);
+  });
+
+  it('a second scale set as default takes over, and only one scale is ever default', async () => {
+    const second = await call('/api/v1/grading-scales', { method: 'POST', body: { name: '__apitest Second Scale' } });
+    expect(second.status).toBe(201);
+    expect(second.body.data.isDefault).toBe(false);
+    made.scales.push(second.body.data.id);
+
+    const setDefault = await call(`/api/v1/grading-scales/${second.body.data.id}/set-default`, { method: 'POST' });
+    expect(setDefault.status, JSON.stringify(setDefault.body)).toBe(200);
+    expect(setDefault.body.data.isDefault).toBe(true);
+
+    const list = await call('/api/v1/grading-scales');
+    const defaults = list.body.data.scales.filter((s: { isDefault: boolean }) => s.isDefault);
+    expect(defaults.length).toBe(1);
+    expect(defaults[0].id).toBe(second.body.data.id);
+
+    // Restore the original default so later tests relying on it are unaffected.
+    const restore = await call(`/api/v1/grading-scales/${scaleId}/set-default`, { method: 'POST' });
+    expect(restore.status).toBe(200);
+  });
+
+  it('denies managing grading scales to a caller without exams.manage_grading', async () => {
+    const res = await call('/api/v1/grading-scales', { token: teacherToken, method: 'POST', body: { name: 'Should Not Be Created' } });
+    expect(res.status).toBe(403);
+  });
+
   let examId: string;
   it('creates a draft exam', async () => {
     const res = await call('/api/v1/exams', { method: 'POST', body: { academicYearId: yearId, examTypeId, name: '__test Exam 1', startDate: '2026-03-01', endDate: '2026-03-10' } });

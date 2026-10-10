@@ -30,6 +30,12 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Mirrors attendance.service.ts's own `isSchoolDay`: Saturday and Sunday are not. */
+function isWeekend(isoDate: string): boolean {
+  const day = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
+  return day === 0 || day === 6;
+}
+
 /** The next Saturday at or after the given date — always a non-school day. */
 function nextSaturday(from: string): string {
   const d = new Date(`${from}T00:00:00Z`);
@@ -110,11 +116,14 @@ afterAll(async () => {
 describe('Attendance API', () => {
   let yearId: string, classId: string, sectionId: string;
   let enrollment1: string, enrollment2: string;
-  // Today: a Teacher holds attendance.mark but not attendance.edit_past, so
-  // only today's own date needs no special permission. This assumes the
-  // suite runs on a weekday, which the weekend-rejection test below checks
-  // independently via nextSaturday() rather than relying on this date.
-  const date = todayIso();
+  // A fixed past Monday, not "today": deterministic regardless of which day
+  // the suite runs on. It is always a school day and always before today, so
+  // every submission against it goes through the edit-past path — hence the
+  // admin token (not teacherToken) and a `reason` on every submit below. The
+  // "today, no special permission" path has its own dedicated test further
+  // down, which branches on whether today happens to be a school day rather
+  // than assuming it.
+  const date = pastMonday();
 
   beforeAll(async () => {
     const yearRes = await call('/api/v1/academic/years', { method: 'POST', body: { name: '2026-27-attendance', startDate: '2026-01-01', endDate: '2026-12-31' } });
@@ -162,7 +171,6 @@ describe('Attendance API', () => {
   it('rejects a batch containing an enrollment outside the section (atomic: nothing is written)', async () => {
     const res = await call('/api/v1/attendance/students/submit', {
       method: 'POST',
-      token: teacherToken,
       body: { sectionId, academicYearId: yearId, date, reason: 'backfill', entries: [{ enrollmentId: enrollment1, status: 'present' }, { enrollmentId: '999999999', status: 'present' }] },
     });
     expect(res.status).toBe(422);
@@ -175,7 +183,6 @@ describe('Attendance API', () => {
   it('submits a valid section sheet in one bulk upsert', async () => {
     const res = await call('/api/v1/attendance/students/submit', {
       method: 'POST',
-      token: teacherToken,
       body: {
         sectionId,
         academicYearId: yearId,
@@ -196,7 +203,6 @@ describe('Attendance API', () => {
   it('correcting the same date is an upsert, not a duplicate row', async () => {
     const res = await call('/api/v1/attendance/students/submit', {
       method: 'POST',
-      token: teacherToken,
       body: { sectionId, academicYearId: yearId, date, reason: 'correction', entries: [{ enrollmentId: enrollment1, status: 'late' }] },
     });
     expect(res.status).toBe(200);
@@ -240,6 +246,22 @@ describe('Attendance API', () => {
       body: { sectionId, academicYearId: yearId, date: past, reason: 'backfilling a missed day', entries: [{ enrollmentId: enrollment1, status: 'present' }] },
     });
     expect(byAdmin.status).toBe(200);
+  });
+
+  it("a teacher can mark today's attendance with no special permission — on a school day; today itself is rejected on a weekend, deterministically either way", async () => {
+    const today = todayIso();
+    const res = await call('/api/v1/attendance/students/submit', {
+      method: 'POST',
+      token: teacherToken,
+      body: { sectionId, academicYearId: yearId, date: today, entries: [{ enrollmentId: enrollment1, status: 'present' }] },
+    });
+    if (isWeekend(today)) {
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe('NOT_A_SCHOOL_DAY');
+    } else {
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.data.saved).toBe(1);
+    }
   });
 
   it('rejects attendance on a weekend', async () => {

@@ -177,6 +177,20 @@ describe('Payroll API', () => {
     structureId = await findOrCreateStructure('__test Grade A');
   });
 
+  it('lists salary components, camelCase, including the ones this suite created', async () => {
+    const res = await call('/api/v1/salary-components');
+    expect(res.status).toBe(200);
+    const comp = res.body.data.components.find((c: { id: string }) => c.id === earningComponent);
+    expect(comp).toBeDefined();
+    expect(comp.calcType).toBe('fixed');
+    expect(comp.type).toBe('earning');
+  });
+
+  it('denies creating a salary component to a caller without payroll.manage_structures', async () => {
+    const res = await call('/api/v1/salary-components', { token: staff1Token, method: 'POST', body: { name: 'Should Not Be Created', type: 'earning', calcType: 'fixed' } });
+    expect(res.status).toBe(403);
+  });
+
   it("assigns staff1's first salary", async () => {
     const res = await call('/api/v1/staff-salaries', { method: 'POST', body: { staffId: staff1, salaryStructureId: structureId, basicSalary: '50000', effectiveFrom: firstOfMonth(period.year, period.month) } });
     expect(res.status).toBe(201);

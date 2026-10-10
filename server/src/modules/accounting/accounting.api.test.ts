@@ -8,6 +8,7 @@ import { hashPassword } from '../../core/auth/password';
 import { SUPER_ADMIN_ROLE } from '../../core/authz/default-roles';
 
 const ADMIN = { username: '__apitest_accounting__', password: 'AcctPassw0rd!2026' };
+const NOBODY = { username: '__apitest_accounting_nobody__', password: 'AcctPassw0rd!2026' };
 
 /*
  * Account heads are find-or-create and never torn down: once a voucher is
@@ -22,6 +23,7 @@ const INCOME_HEAD_CODE = '__TESTACCT-INC';
 let server: Server;
 let baseUrl: string;
 let token: string;
+let nobodyToken: string;
 
 // Only a draft (never posted) voucher is safely deletable; it is the only
 // thing this suite tears down.
@@ -61,12 +63,26 @@ beforeAll(async () => {
   const login = await call('/api/v1/auth/login', { method: 'POST', token: 'none', body: { username: ADMIN.username, password: ADMIN.password } });
   if (login.status !== 200) throw new Error('Login failed: ' + JSON.stringify(login.body));
   token = login.body.data.accessToken;
+
+  await transaction(SYSTEM_ACTOR, async (uow) => {
+    const hash = await hashPassword(NOBODY.password);
+    const existing = await uow.maybeOne<{ id: string }>(`SELECT id::text AS id FROM users WHERE lower(username) = $1`, [NOBODY.username]);
+    if (!existing) {
+      await uow.count(`INSERT INTO users (username, password_hash, user_type, must_change_password, is_active) VALUES ($1, $2, 'admin', false, true)`, [NOBODY.username, hash]);
+    } else {
+      await uow.count(`UPDATE users SET password_hash = $2, is_active = true, must_change_password = false WHERE id = $1`, [existing.id, hash]);
+    }
+  });
+  const nobodyLogin = await call('/api/v1/auth/login', { method: 'POST', token: 'none', body: { username: NOBODY.username, password: NOBODY.password } });
+  if (nobodyLogin.status !== 200) throw new Error('Login failed: ' + JSON.stringify(nobodyLogin.body));
+  nobodyToken = nobodyLogin.body.data.accessToken;
 });
 
 afterAll(async () => {
   await transaction(SYSTEM_ACTOR, async (uow) => {
     await uow.count(`DELETE FROM voucher_entries WHERE voucher_id = ANY($1)`, [made.draftVouchers]);
     await uow.count(`DELETE FROM vouchers WHERE id = ANY($1)`, [made.draftVouchers]);
+    await uow.count(`UPDATE users SET is_active = false WHERE lower(username) = $1`, [NOBODY.username]);
   });
   server.close();
   await closePool();
@@ -88,6 +104,26 @@ describe('Accounting API', () => {
     const trial = await call('/api/v1/reports/accounting/trial-balance?asOf=2026-12-31');
     const cashRow = trial.body.data.rows.find((r: { accountHeadId: string }) => r.accountHeadId === cashHeadId);
     baselineCashTrialDebit = cashRow ? Number(cashRow.debit) : 0;
+  });
+
+  it('lists account heads, camelCase, including the ones this suite created', async () => {
+    const res = await call('/api/v1/account-heads');
+    expect(res.status).toBe(200);
+    const head = res.body.data.accountHeads.find((h: { id: string }) => h.id === cashHeadId);
+    expect(head).toBeDefined();
+    expect(head.code).toBe(CASH_HEAD_CODE);
+    expect(head.type).toBe('asset');
+    expect(head.isActive).toBe(true);
+  });
+
+  it('denies creating an account head to a caller without accounting.manage_heads', async () => {
+    const res = await call('/api/v1/account-heads', { token: nobodyToken, method: 'POST', body: { code: 'SHOULD-NOT-EXIST', name: 'Should Not Be Created', type: 'asset' } });
+    expect(res.status).toBe(403);
+  });
+
+  it('denies reading account heads to a caller without accounting.read', async () => {
+    const res = await call('/api/v1/account-heads', { token: nobodyToken });
+    expect(res.status).toBe(403);
   });
 
   it('rejects a voucher with fewer than two entries', async () => {

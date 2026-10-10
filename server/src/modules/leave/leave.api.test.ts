@@ -165,6 +165,40 @@ describe('Leave API', () => {
     await call('/api/v1/student-guardians', { method: 'POST', body: { studentId, guardianId, relation: 'father', isPrimary: true, isFeePayer: true } });
   });
 
+  it('lists leave types, including the ones created for this suite', async () => {
+    const res = await call('/api/v1/leave-types');
+    expect(res.status).toBe(200);
+    expect(res.body.data.leaveTypes.some((t: { id: string }) => t.id === studentLeaveTypeId)).toBe(true);
+    expect(res.body.data.leaveTypes.some((t: { id: string }) => t.id === staffLeaveTypeId)).toBe(true);
+  });
+
+  it('edits a leave type', async () => {
+    const res = await call('/api/v1/leave-types', { method: 'POST', body: { name: '__apitest editable leave', appliesTo: 'staff', daysPerYear: 5 } });
+    expect(res.status).toBe(201);
+    const id = res.body.data.id;
+    made.leaveTypes.push(id);
+
+    const edited = await call(`/api/v1/leave-types/${id}`, { method: 'PATCH', body: { daysPerYear: 7 } });
+    expect(edited.status, JSON.stringify(edited.body)).toBe(200);
+    expect(edited.body.data.daysPerYear).toBe(7);
+  });
+
+  it('deletes a leave type that has no requests or balances attached', async () => {
+    const created = await call('/api/v1/leave-types', { method: 'POST', body: { name: '__apitest disposable leave', appliesTo: 'staff', daysPerYear: 3 } });
+    const id = created.body.data.id;
+
+    const deleted = await call(`/api/v1/leave-types/${id}`, { method: 'DELETE' });
+    expect(deleted.status).toBe(204);
+
+    const listed = await call('/api/v1/leave-types');
+    expect(listed.body.data.leaveTypes.some((t: { id: string }) => t.id === id)).toBe(false);
+  });
+
+  it('denies managing leave types to a caller without leave.manage_types', async () => {
+    const res = await call('/api/v1/leave-types', { token: teacherToken, method: 'POST', body: { name: 'Should Not Be Created', appliesTo: 'staff', daysPerYear: 1 } });
+    expect(res.status).toBe(403);
+  });
+
   it('rejects an inverted date range', async () => {
     const res = await call('/api/v1/leave/student-requests', { method: 'POST', body: { enrollmentId, leaveTypeId: studentLeaveTypeId, fromDate: '2026-03-10', toDate: '2026-03-05' } });
     expect(res.status).toBe(422);

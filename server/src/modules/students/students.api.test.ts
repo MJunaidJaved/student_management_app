@@ -101,6 +101,7 @@ describe('Students API', () => {
   let classId: string;
   let sectionId: string;
   let student1Id: string;
+  let admissionNo1: string;
   let student2Id: string;
   let guardianId: string;
 
@@ -145,7 +146,32 @@ describe('Students API', () => {
     expect(res.body.data.student.firstName).toBe('John');
     expect(res.body.data.student.admissionNo).toBeDefined();
     student1Id = res.body.data.student.id;
+    admissionNo1 = res.body.data.student.admissionNo;
     made.students.push(student1Id);
+  });
+
+  it('finds a student by exact admission number via the global search', async () => {
+    const res = await call(`/api/v1/search?q=${encodeURIComponent(admissionNo1)}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.kind).toBe('admission_no');
+    expect(res.body.data.students.some((s: { id: string }) => s.id === student1Id)).toBe(true);
+  });
+
+  it('finds a student by name, by the trigram-backed path', async () => {
+    const res = await call(`/api/v1/search?q=${encodeURIComponent('John')}&typeahead=true`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.students.some((s: { id: string }) => s.id === student1Id)).toBe(true);
+  });
+
+  it('global search returns nothing for an admission number that does not exist', async () => {
+    const res = await call(`/api/v1/search?q=${encodeURIComponent('ADM-NOT-REAL-999999')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.students.length).toBe(0);
+  });
+
+  it('denies the global search to a caller without students.search', async () => {
+    const res = await fetch(`${baseUrl}/api/v1/search?q=John`);
+    expect(res.status).toBe(401);
   });
 
   it('creates a guardian', async () => {
