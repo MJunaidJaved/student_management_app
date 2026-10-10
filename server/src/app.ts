@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The Express application.
  *
  * Middleware order here is load-bearing; see the comments on each block. The
@@ -42,6 +42,10 @@ import { accountingRoutes } from './modules/accounting/accounting.routes';
 import { examsRoutes } from './modules/exams/exams.routes';
 import { promotionsRoutes } from './modules/promotions/promotions.routes';
 import { payrollRoutes } from './modules/payroll/payroll.routes';
+import { inventoryRoutes } from './modules/inventory/inventory.routes';
+import { libraryRoutes } from './modules/library/library.routes';
+import { transportRoutes } from './modules/transport/transport.routes';
+import { reportsRoutes } from './modules/reports/reports.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -54,7 +58,7 @@ export function createApp(container: Container): Express {
   const app = express();
 
   /*
-   * Behind a reverse proxy, req.ip is the proxy unless this is set — which
+   * Behind a reverse proxy, req.ip is the proxy unless this is set â€” which
    * would make every per-IP rate limit count the whole internet as one client.
    * Off by default because trusting the header when NOT behind a proxy lets a
    * caller spoof their own IP and bypass the same limits.
@@ -138,6 +142,10 @@ export function createApp(container: Container): Express {
   mount('', examsRoutes(container.services.exams));
   mount('', promotionsRoutes(container.services.promotions));
   mount('', payrollRoutes(container.services.payroll));
+  mount('', inventoryRoutes(container.services.inventory));
+  mount('', libraryRoutes(container.services.library));
+  mount('', transportRoutes(container.services.transport));
+  mount('', reportsRoutes(container.services.reports));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {
@@ -182,3 +190,4 @@ function assertRoutesDeclared(): void {
     'Route declaration check passed',
   );
 }
+

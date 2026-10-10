@@ -80,6 +80,7 @@ const UNIQUE_HINTS: ReadonlyArray<readonly [fragment: string, message: string]> 
   ['exam_schedule', 'Marks for this student and paper already exist.'],
   ['billing_period', 'An invoice for this student and billing period already exists.'],
   ['attendance', 'Attendance for this student and date already exists.'],
+  ['uq_one_active_transport', 'This enrollment already has an active transport allocation. End it before creating a new one.'],
 ];
 
 /**

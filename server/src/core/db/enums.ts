@@ -101,6 +101,21 @@ export const PAYROLL_RUN_STATUSES = ['draft', 'approved', 'paid'] as const;
 /** `student_promotions.action` */
 export const PROMOTION_ACTIONS = ['promoted', 'detained', 'graduated'] as const;
 
+/** `purchase_orders.status` — the workflow in Module 11. */
+export const PURCHASE_ORDER_STATUSES = ['draft', 'ordered', 'received', 'cancelled'] as const;
+
+/** `stock_movements.type` */
+export const STOCK_MOVEMENT_TYPES = ['in', 'out', 'adjustment'] as const;
+
+/** `book_issues.borrower_type` */
+export const BORROWER_TYPES = ['student', 'staff'] as const;
+
+/** `book_issues.status` — the workflow in Module 12. */
+export const BOOK_ISSUE_STATUSES = ['issued', 'returned', 'lost'] as const;
+
+/** `library_fines.status` */
+export const LIBRARY_FINE_STATUSES = ['unpaid', 'paid', 'waived'] as const;
+
 export type Gender = (typeof GENDERS)[number];
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
@@ -117,6 +132,11 @@ export type SalaryComponentType = (typeof SALARY_COMPONENT_TYPES)[number];
 export type SalaryComponentCalcType = (typeof SALARY_COMPONENT_CALC_TYPES)[number];
 export type PayrollRunStatus = (typeof PAYROLL_RUN_STATUSES)[number];
 export type PromotionAction = (typeof PROMOTION_ACTIONS)[number];
+export type PurchaseOrderStatus = (typeof PURCHASE_ORDER_STATUSES)[number];
+export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
+export type BorrowerType = (typeof BORROWER_TYPES)[number];
+export type BookIssueStatus = (typeof BOOK_ISSUE_STATUSES)[number];
+export type LibraryFineStatus = (typeof LIBRARY_FINE_STATUSES)[number];
 
 /**
  * Allowed transitions for the admission workflow (Part 4.6, State pattern).
@@ -174,6 +194,35 @@ export const PAYROLL_RUN_TRANSITIONS: Readonly<Record<PayrollRunStatus, readonly
   draft: ['approved'],
   approved: ['paid'],
   paid: [],
+};
+
+/**
+ * Allowed transitions for a purchase order (Module 11).
+ *
+ * `received` is reached by the service once every item is fully received,
+ * not by a direct caller-chosen transition — partial receiving keeps the
+ * order `ordered` across several receipts. A draft can still be cancelled
+ * before anything is ordered; once `received` or `cancelled`, Part 11's
+ * "received or cancelled state are frozen" makes both terminal.
+ */
+export const PURCHASE_ORDER_TRANSITIONS: Readonly<Record<PurchaseOrderStatus, readonly PurchaseOrderStatus[]>> = {
+  draft: ['ordered', 'cancelled'],
+  ordered: ['received', 'cancelled'],
+  received: [],
+  cancelled: [],
+};
+
+/**
+ * Allowed transitions for a library book issue (Module 12).
+ *
+ * Both `returned` and `lost` are terminal: a returned book is re-borrowed
+ * through a fresh issue, and a lost one is settled through its fine, never
+ * reopened.
+ */
+export const BOOK_ISSUE_TRANSITIONS: Readonly<Record<BookIssueStatus, readonly BookIssueStatus[]>> = {
+  issued: ['returned', 'lost'],
+  returned: [],
+  lost: [],
 };
 
 /** True when `to` is reachable from `from`. */

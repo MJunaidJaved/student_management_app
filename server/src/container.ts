@@ -1,3 +1,5 @@
+﻿import { ReportsRepository } from './modules/reports/reports.repository';
+import { ReportsService } from './modules/reports/reports.service';
 /**
  * The composition root (Part 4.4).
  *
@@ -97,6 +99,31 @@ import {
   PayslipItemRepository,
 } from './modules/payroll/payroll.repository';
 import { PayrollService } from './modules/payroll/payroll.service';
+import {
+  ItemCategoryRepository,
+  ItemRepository,
+  ItemStockRepository,
+  StockMovementRepository,
+  SupplierRepository,
+  PurchaseOrderRepository,
+  PurchaseOrderItemRepository,
+} from './modules/inventory/inventory.repository';
+import { InventoryService } from './modules/inventory/inventory.service';
+import {
+  BookCategoryRepository,
+  BookRepository,
+  BookIssueRepository,
+  LibraryFineRepository,
+} from './modules/library/library.repository';
+import { LibraryService } from './modules/library/library.service';
+import {
+  DriverRepository,
+  VehicleRepository,
+  RouteRepository,
+  RouteStopRepository,
+  StudentTransportRepository,
+} from './modules/transport/transport.repository';
+import { TransportService } from './modules/transport/transport.service';
 
 export type Container = {
   cache: CacheStore;
@@ -156,6 +183,23 @@ export type Container = {
     payrollRuns: PayrollRunRepository;
     payslips: PayslipRepository;
     payslipItems: PayslipItemRepository;
+    itemCategories: ItemCategoryRepository;
+    items: ItemRepository;
+    itemStock: ItemStockRepository;
+    suppliers: SupplierRepository;
+    purchaseOrders: PurchaseOrderRepository;
+    purchaseOrderItems: PurchaseOrderItemRepository;
+    stockMovements: StockMovementRepository;
+    bookCategories: BookCategoryRepository;
+    books: BookRepository;
+    bookIssues: BookIssueRepository;
+    libraryFines: LibraryFineRepository;
+    drivers: DriverRepository;
+    vehicles: VehicleRepository;
+    transportRoutes: RouteRepository;
+    routeStops: RouteStopRepository;
+    studentTransport: StudentTransportRepository;
+    reports: ReportsRepository;
   };
   services: {
     auth: AuthService;
@@ -174,6 +218,10 @@ export type Container = {
     promotions: PromotionsService;
     payroll: PayrollService;
     accounting: AccountingService;
+    inventory: InventoryService;
+    library: LibraryService;
+    transport: TransportService;
+    reports: ReportsService;
   };
 };
 
@@ -264,10 +312,34 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const payslipsRepo = new PayslipRepository();
   const payslipItemsRepo = new PayslipItemRepository();
 
+  const settingsService = new SettingsService(cache);
+
+  const itemCategoriesRepo = new ItemCategoryRepository();
+  const itemsRepo = new ItemRepository();
+  const itemStockRepo = new ItemStockRepository();
+  const stockMovementsRepo = new StockMovementRepository();
+  const suppliersRepo = new SupplierRepository();
+  const purchaseOrdersRepo = new PurchaseOrderRepository();
+  const purchaseOrderItemsRepo = new PurchaseOrderItemRepository();
+
+  const bookCategoriesRepo = new BookCategoryRepository();
+  const booksRepo = new BookRepository();
+  const bookIssuesRepo = new BookIssueRepository();
+  const libraryFinesRepo = new LibraryFineRepository();
+
+  const driversRepo = new DriverRepository();
+  const vehiclesRepo = new VehicleRepository();
+  const transportRoutesRepo = new RouteRepository();
+  const routeStopsRepo = new RouteStopRepository();
+  const studentTransportRepo = new StudentTransportRepository();
+
   const studentPolicy = new StudentPolicy(cache, permissions);
   const sectionPolicy = new SectionPolicy(cache, permissions);
   const staffPolicy = new StaffPolicy(cache, permissions);
   const userPolicy = new UserPolicy(cache, permissions);
+
+  const reportsRepo = new ReportsRepository();
+  const reportsService = new ReportsService(reportsRepo);
 
   return {
     cache,
@@ -327,11 +399,28 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       payrollRuns: payrollRunsRepo,
       payslips: payslipsRepo,
       payslipItems: payslipItemsRepo,
+      itemCategories: itemCategoriesRepo,
+      items: itemsRepo,
+      itemStock: itemStockRepo,
+      suppliers: suppliersRepo,
+      purchaseOrders: purchaseOrdersRepo,
+      purchaseOrderItems: purchaseOrderItemsRepo,
+      stockMovements: stockMovementsRepo,
+      bookCategories: bookCategoriesRepo,
+      books: booksRepo,
+      bookIssues: bookIssuesRepo,
+      libraryFines: libraryFinesRepo,
+      drivers: driversRepo,
+      vehicles: vehiclesRepo,
+      transportRoutes: transportRoutesRepo,
+      routeStops: routeStopsRepo,
+      studentTransport: studentTransportRepo,
+      reports: reportsRepo,
     },
     services: {
       auth: new AuthService(authRepository, permissions, denylist),
       roles: new RolesService(rolesRepository, permissions),
-      settings: new SettingsService(cache),
+      settings: settingsService,
       audit: new AuditService(),
       academic: new AcademicService(
         academicYears,
@@ -416,6 +505,13 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       promotions: new PromotionsService(studentPromotionsRepo, enrollmentsRepo, studentsRepo, sections),
       payroll: new PayrollService(salaryComponentsRepo, salaryStructuresRepo, staffSalariesRepo, payrollRunsRepo, payslipsRepo, payslipItemsRepo, staffRepo, permissions),
       accounting: accountingService,
+      inventory: new InventoryService(
+        itemCategoriesRepo, itemsRepo, itemStockRepo, stockMovementsRepo, suppliersRepo, purchaseOrdersRepo, purchaseOrderItemsRepo, settingsService,
+      ),
+      library: new LibraryService(bookCategoriesRepo, booksRepo, bookIssuesRepo, libraryFinesRepo, paymentsRepo, settingsService, permissions),
+      transport: new TransportService(driversRepo, vehiclesRepo, transportRoutesRepo, routeStopsRepo, studentTransportRepo, enrollmentsRepo, permissions),
+      reports: reportsService,
     },
   };
 }
+

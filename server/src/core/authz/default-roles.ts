@@ -70,6 +70,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     // Approves; does not run payroll itself — the same segregation the
     // Accountant's own entry already names.
     'payroll.read', 'payroll.read_own', 'payroll.approve',
+    // Oversight only: stock, books and the fleet are run day to day by the
+    // Accountant and the Librarian.
+    'inventory.read', 'inventory.read_reports',
+    'library.read', 'library.read_reports',
+    'transport.read', 'transport.read_compliance',
   ],
 
   Teacher: [
@@ -86,6 +91,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'payroll.read_own',
     // Their own timetable and substitution history, not the school's.
     'timetable.read', 'substitutions.read',
+    // A teacher can borrow library books like any staff member.
+    'library.read_own',
   ],
 
   Accountant: [
@@ -105,17 +112,29 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     // Principal's entry names this same segregation.
     'payroll.read', 'payroll.read_own', 'payroll.manage_structures',
     'payroll.manage_salaries', 'payroll.run', 'payroll.adjust', 'payroll.mark_paid',
+    'library.read_own',
+    // Purchasing, receiving and stock adjustments are a financial function,
+    // the same reasoning that already puts expenses and vouchers here.
+    'inventory.read', 'inventory.manage_items', 'inventory.manage_suppliers',
+    'inventory.manage_purchase_orders', 'inventory.receive_purchase_order',
+    'inventory.adjust_stock', 'inventory.issue_stock', 'inventory.read_reports',
+    // The transport fee is collected through the fee module, so the fleet and
+    // its allocations sit with the same role that manages fee-bearing data.
+    'transport.read', 'transport.manage_fleet', 'transport.allocate',
+    'transport.read_compliance',
   ],
 
   Librarian: [
-    // Library codes belong to Module 11, whose specification has not been
-    // supplied, so this role currently holds only what it needs to identify a
-    // borrower. It must be revisited when that module is built.
+    // The full day-to-day library workflow: issue, return, renew, mark lost,
+    // waive a fine, run the reports.
     'academic.read',
     'students.read', 'students.search',
     'staff.read_own',
     'leave.read_own', 'leave.request',
     'payroll.read_own',
+    'library.read', 'library.read_own', 'library.manage_catalog', 'library.issue',
+    'library.return', 'library.renew', 'library.mark_lost', 'library.manage_fines',
+    'library.read_reports',
   ],
 
   Guardian: [
@@ -124,12 +143,15 @@ export const DEFAULT_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]
     'fees.read_own',
     'leave.request', 'leave.read_own',
     'exams.read_own',
+    'library.read_own',
+    'transport.read_own',
   ],
 
   Student: [
     'fees.read_own',
     'leave.read_own',
     'exams.read_own',
+    'library.read_own',
   ],
 };
 

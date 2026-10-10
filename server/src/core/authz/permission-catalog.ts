@@ -19,9 +19,8 @@
  *   * `.override` where a code lifts a scope restriction rather than granting
  *     an action, for example marking attendance for a section you do not teach.
  *
- * Modules 1 to 7 and module 9 (timetable) are listed; both are built. The rest
- * of modules 8 to 15 are not, so their codes are not invented ahead of their
- * endpoints.
+ * Modules 1 to 9, plus 11 to 13, are built and listed. Modules 14 and 15 are
+ * not, so their codes are not invented ahead of their endpoints.
  */
 
 export type PermissionDefinition = {
@@ -241,6 +240,43 @@ const payroll = define('payroll', [
   ['mark_paid', 'Mark an approved payroll run as paid', true],
 ]);
 
+/* ---------------- Module 11: inventory ---------------- */
+
+const inventory = define('inventory', [
+  ['read', 'View item categories, items, suppliers, stock levels and movement history'],
+  ['manage_items', 'Create and edit item categories and items'],
+  ['manage_suppliers', 'Create and edit suppliers'],
+  ['manage_purchase_orders', 'Create, edit and cancel a draft or ordered purchase order'],
+  ['receive_purchase_order', 'Receive a purchase order, fully or partially', true],
+  ['adjust_stock', 'Record a manual stock adjustment with a reason', true],
+  ['issue_stock', 'Issue stock to a department or student', true],
+  ['read_reports', 'View stock-on-hand, valuation and purchasing reports'],
+]);
+
+/* ---------------- Module 12: library ---------------- */
+
+const library = define('library', [
+  ['read', 'View books, categories and issue history'],
+  ['read_own', 'View your own currently issued books and fines'],
+  ['manage_catalog', 'Create and edit book categories and books'],
+  ['issue', 'Issue a book to a borrower'],
+  ['return', 'Mark a book returned'],
+  ['renew', 'Renew an issued book'],
+  ['mark_lost', 'Mark a book lost and create its replacement fine', true],
+  ['manage_fines', 'Waive a library fine', true],
+  ['read_reports', 'View overdue, most-borrowed and borrower-history reports'],
+]);
+
+/* ---------------- Module 13: transport ---------------- */
+
+const transport = define('transport', [
+  ['read', 'View drivers, vehicles, routes, stops and allocations'],
+  ['read_own', 'View your own or your children’s transport allocation'],
+  ['manage_fleet', 'Create and edit drivers, vehicles, routes and stops'],
+  ['allocate', 'Allocate or end a student’s transport allocation', true],
+  ['read_compliance', 'View expiring license, insurance and fitness reports'],
+]);
+
 /** Every permission in the system. */
 export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...users, ...roles, ...permissions, ...audit, ...settings,
@@ -253,6 +289,9 @@ export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...exams,
   ...staff,
   ...payroll,
+  ...inventory,
+  ...library,
+  ...transport,
 ];
 
 /** Fast membership checks, and the guard behind `requirePermission`. */
