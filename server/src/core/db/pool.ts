@@ -45,8 +45,14 @@ export const pool = new Pool({
   connectionString: config.DATABASE_URL,
   ssl: isLocal ? false : { rejectUnauthorized: false },
   max: config.PGPOOL_MAX,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000,
+  // Keep warm connections around: each new one costs a TLS handshake plus setup
+  // round trips to a remote database. keepAlive below keeps them healthy.
+  idleTimeoutMillis: 300_000,
+  // The database is remote (Supabase, Singapore); 10s was too tight for a slow link.
+  connectionTimeoutMillis: 25_000,
+  // Stops routers/NAT from silently dropping idle sockets, which surfaced as "terminated unexpectedly".
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10_000,
 });
 
 /*
@@ -72,10 +78,14 @@ const configured = new WeakSet<PoolClient>();
  */
 async function configureClient(client: PoolClient): Promise<void> {
   if (configured.has(client)) return;
-  await client.query('SET extra_float_digits = 3');
-  await client.query(`SET statement_timeout = ${config.DB_STATEMENT_TIMEOUT_MS}`);
-  await client.query(`SET lock_timeout = ${config.DB_LOCK_TIMEOUT_MS}`);
-  await client.query("SET idle_in_transaction_session_timeout = '30s'");
+  // One round trip, not four: the values are numeric config, never user input,
+  // so a single simple-protocol multi-statement query is safe here.
+  await client.query(
+    `SET extra_float_digits = 3;
+     SET statement_timeout = ${Number(config.DB_STATEMENT_TIMEOUT_MS)};
+     SET lock_timeout = ${Number(config.DB_LOCK_TIMEOUT_MS)};
+     SET idle_in_transaction_session_timeout = '30s';`,
+  );
   configured.add(client);
 }
 
