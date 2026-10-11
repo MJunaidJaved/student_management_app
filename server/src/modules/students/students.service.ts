@@ -564,6 +564,25 @@ export class StudentsService {
     });
   }
 
+  /** The reverse of a student's guardian list: which students a guardian is linked to. */
+  async studentsForGuardian(
+    actor: Actor,
+    guardianId: string,
+  ): Promise<{ id: string; admissionNo: string; firstName: string; lastName: string | null; relation: string; isPrimary: boolean }[]> {
+    return readTransaction(actor, async (uow) => {
+      await this.guardians.getById(uow, guardianId);
+      const rows = await this.guardians.childrenOf(uow, guardianId);
+      return rows.map((r) => ({
+        id: r.id,
+        admissionNo: r.admission_no,
+        firstName: r.first_name,
+        lastName: r.last_name,
+        relation: r.relation,
+        isPrimary: r.is_primary,
+      }));
+    });
+  }
+
   async linkGuardian(
     actor: Actor,
     input: {

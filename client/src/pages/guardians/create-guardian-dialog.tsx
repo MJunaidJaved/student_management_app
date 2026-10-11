@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/toast'
 
 type FormValues = { fullName: string; phone: string; nationalId: string; email: string; occupation: string; address: string }
 
-export function CreateGuardianDialog({ onCreated, onClose }: { onCreated: (id: string) => void; onClose: () => void }) {
+export function CreateGuardianDialog({ onCreated, onClose }: { onCreated: (name: string) => void; onClose: () => void }) {
   const { show } = useToast()
   const {
     register,
@@ -26,9 +26,9 @@ export function CreateGuardianDialog({ onCreated, onClose }: { onCreated: (id: s
         occupation: v.occupation || undefined,
         address: v.address || undefined,
       }),
-    onSuccess: (res) => {
+    onSuccess: (_res, v) => {
       show('success', 'Guardian created')
-      onCreated(res.data.data.id)
+      onCreated(v.fullName)
       onClose()
     },
     onError: (err) => show('error', apiErrorMessage(err).message),

@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input, Label } from '@/components/ui/input'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StudentPicker, type PickableStudent } from '@/components/student-picker'
 import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
 import type { FeeInvoiceView } from './types'
 
-type SearchStudent = { id: string; admissionNo: string; firstName: string; lastName: string | null }
+type SearchStudent = PickableStudent
 type StudentDetail = { firstName: string; lastName: string | null; enrollment: { id: string; classId: string; sectionId: string } | null }
 
 type FormValues = { billingPeriod: string; issueDate: string; dueDate: string }
@@ -76,17 +76,7 @@ export function GenerateInvoiceDialog({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           ) : (
-            <EntitySearchBox<SearchStudent>
-              endpoint="/search"
-              resultsKey="students"
-              placeholder="Search for a student…"
-              onSelect={selectStudent}
-              renderResult={(s) => (
-                <span>
-                  {s.firstName} {s.lastName ?? ''} <span className="text-xs text-ink-subtle">({s.admissionNo})</span>
-                </span>
-              )}
-            />
+            <StudentPicker onSelect={selectStudent} placeholder="Search for a student…" />
           )}
           {loadingStudent && <p className="mt-1 text-xs text-ink-muted">Loading enrollment…</p>}
         </div>

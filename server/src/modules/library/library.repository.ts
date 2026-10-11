@@ -172,6 +172,23 @@ export class LibraryFineRepository extends BaseRepository<LibraryFineRow> {
     return uow.many<LibraryFineRow>(`SELECT * FROM library_fines WHERE book_issue_id = $1 ORDER BY id`, [bookIssueId]);
   }
 
+  async forBorrower(
+    uow: Uow,
+    borrowerType: 'student' | 'staff',
+    borrowerId: string,
+  ): Promise<(LibraryFineRow & { title: string; accession_no: string })[]> {
+    const column = borrowerType === 'student' ? 'student_id' : 'staff_id';
+    return uow.many(
+      `SELECT f.*, b.title, b.accession_no
+         FROM library_fines f
+         JOIN book_issues bi ON bi.id = f.book_issue_id
+         JOIN books b ON b.id = bi.book_id
+        WHERE bi.${column} = $1
+        ORDER BY f.id DESC`,
+      [borrowerId],
+    );
+  }
+
   async unpaidCountForBorrower(uow: Uow, borrowerType: 'student' | 'staff', borrowerId: string): Promise<number> {
     const column = borrowerType === 'student' ? 'student_id' : 'staff_id';
     const row = await uow.one<{ n: number }>(

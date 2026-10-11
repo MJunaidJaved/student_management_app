@@ -30,7 +30,7 @@ export function EntryDialog({
 }) {
   const { show } = useToast()
   const queryClient = useQueryClient()
-  const existingAssignment = existing ? assignments.find((a) => a.subject_id === existing.subjectId && a.staff_id === existing.staffId) : undefined
+  const existingAssignment = existing ? assignments.find((a) => a.subjectId === existing.subjectId && a.staffId === existing.staffId) : undefined
 
   const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: { assignmentId: existingAssignment?.id ?? '', roomId: existing?.roomId ?? '' },
@@ -49,8 +49,8 @@ export function EntryDialog({
         sectionId,
         dayOfWeek,
         periodId,
-        subjectId: assignment.subject_id,
-        staffId: assignment.staff_id,
+        subjectId: assignment.subjectId,
+        staffId: assignment.staffId,
         roomId: v.roomId || undefined,
       }
       if (existing) {
@@ -92,7 +92,7 @@ export function EntryDialog({
             <option value="">Select…</option>
             {assignments.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.subject_name} — {a.staff_name}
+                {a.subjectName} — {a.staffName}
               </option>
             ))}
           </Select>

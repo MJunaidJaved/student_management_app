@@ -63,6 +63,15 @@ export function libraryRoutes(library: LibraryService): RouteDeclaration[] {
         return okBody({ issues: await library.issuesForBorrower(actorOf(req), params.type, params.id) });
       }),
     },
+    {
+      method: 'get', path: '/borrowers/:type/:id/library-fines', summary: "A borrower's fines (self, a guardian of a student borrower, or a library.read holder)",
+      permission: 'library.read_own', ownership: 'guardian-children', rateLimit: 'userStandard',
+      schemas: borrowerParams,
+      handler: handler(async (req) => {
+        const { params } = validated<typeof borrowerParams>(req);
+        return okBody({ fines: await library.finesForBorrower(actorOf(req), params.type, params.id) });
+      }),
+    },
 
     /* ---------------- issue, return, renew, lose ---------------- */
     {

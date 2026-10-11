@@ -11,6 +11,7 @@ import { PageLoading, ErrorState, EmptyState } from '@/components/ui/feedback'
 import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
+import { RequirePermission } from '@/components/protected-route'
 import { useToast } from '@/components/ui/toast'
 import type { PayrollRunView, PayslipListItem } from './types'
 import { MONTH_NAMES } from './types'
@@ -63,6 +64,7 @@ export function RunDetailPage() {
   const r = run.data
 
   return (
+    <RequirePermission anyOf={['payroll.read', 'payroll.read_own']}>
     <div>
       <Button variant="ghost" size="sm" onClick={() => navigate('/payroll')} className="mb-2">
         <ArrowLeft className="size-4" />
@@ -133,5 +135,6 @@ export function RunDetailPage() {
 
       {activePayslip && <PayslipDialog payslipId={activePayslip} runStatus={r.status} onClose={() => setActivePayslip(null)} />}
     </div>
+    </RequirePermission>
   )
 }

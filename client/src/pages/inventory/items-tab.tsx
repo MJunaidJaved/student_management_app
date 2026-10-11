@@ -11,7 +11,7 @@ import { apiClient } from '@/lib/api-client'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
 import type { Envelope } from '@/types/api'
-import type { ItemCategoryView, ItemView, StockMovementRow } from './types'
+import type { ItemCategoryView, ItemView, StockMovementView } from './types'
 import { CreateItemDialog } from './create-item-dialog'
 import { StockActionDialog } from './stock-action-dialog'
 
@@ -154,7 +154,7 @@ export function ItemsTab() {
 }
 
 function MovementsList({ itemId }: { itemId: string }) {
-  const movements = useApiQuery<{ movements: StockMovementRow[]; nextCursorId: string | null }>(
+  const movements = useApiQuery<{ movements: StockMovementView[]; nextCursorId: string | null }>(
     ['inventory', 'movements', itemId],
     `/items/${itemId}/movements`,
   )
@@ -178,8 +178,8 @@ function MovementsList({ itemId }: { itemId: string }) {
             <Tr key={m.id}>
               <Td className="capitalize">{m.type}</Td>
               <Td>{m.quantity}</Td>
-              <Td>{m.reference_type ?? '—'}</Td>
-              <Td>{m.moved_at}</Td>
+              <Td>{m.referenceType ?? '—'}</Td>
+              <Td>{m.movedAt}</Td>
             </Tr>
           ))}
         </Tbody>

@@ -11,6 +11,7 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAcademicLookups } from '@/hooks/use-academic-lookups'
 import { useAuth } from '@/lib/auth-context'
+import { RequirePermission } from '@/components/protected-route'
 import { useToast } from '@/components/ui/toast'
 import type { AdmissionApplicationView, ApplicationStatus } from './types'
 import { APPLICATION_TRANSITIONS } from './types'
@@ -46,6 +47,7 @@ export function ApplicationDetailPage() {
   const canConvert = hasPermission('admissions.enroll') && a.status === 'accepted'
 
   return (
+    <RequirePermission anyOf={['admissions.read']}>
     <div className="mx-auto max-w-2xl">
       <Button variant="ghost" size="sm" onClick={() => navigate('/admissions')} className="mb-2">
         <ArrowLeft className="size-4" />
@@ -107,7 +109,7 @@ export function ApplicationDetailPage() {
         </div>
 
         {canDecide && nextStatuses.length > 0 && (
-          <div className="mt-5 flex gap-2 border-t border-border pt-4">
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
             {nextStatuses.map((s) => (
               <Button key={s} variant={s === 'rejected' ? 'danger' : 'primary'} size="sm" loading={decide.isPending} onClick={() => decide.mutate(s)}>
                 Mark {s}
@@ -119,5 +121,6 @@ export function ApplicationDetailPage() {
 
       {convertOpen && <ConvertDialog application={a} onClose={() => setConvertOpen(false)} />}
     </div>
+    </RequirePermission>
   )
 }

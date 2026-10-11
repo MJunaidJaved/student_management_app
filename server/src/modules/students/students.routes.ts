@@ -276,6 +276,19 @@ export function studentRoutes(students: StudentsService): RouteDeclaration[] {
       }),
     },
     {
+      method: 'get',
+      path: '/guardians/:id/students',
+      summary: "The students a guardian is linked to (the reverse of a student's guardian list)",
+      permission: 'guardians.search',
+      ownership: 'none',
+      rateLimit: 'userStandard',
+      schemas: idSchema,
+      handler: handler(async (req) => {
+        const { params } = validated<typeof idSchema>(req);
+        return okBody({ students: await students.studentsForGuardian(actorOf(req), params.id) });
+      }),
+    },
+    {
       method: 'post',
       path: '/student-guardians',
       summary: 'Link a guardian to a student',

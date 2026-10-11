@@ -10,7 +10,7 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StaffPicker, type PickableStaff } from '@/components/staff-picker'
 import type { SalaryComponentView, SalaryStructureView, StaffSalaryView } from './types'
 
 function ComponentsCard() {
@@ -149,7 +149,7 @@ function StructuresCard() {
   )
 }
 
-type SearchStaff = { id: string; employeeNo: string; fullName: string }
+type SearchStaff = PickableStaff
 
 function StaffSalaryCard() {
   const { hasPermission } = useAuth()
@@ -184,18 +184,7 @@ function StaffSalaryCard() {
   return (
     <Card className="p-4">
       <h3 className="mb-3 text-sm font-semibold text-ink">Staff Salary</h3>
-      <EntitySearchBox<SearchStaff>
-        endpoint="/staff-search"
-        resultsKey="staff"
-        placeholder="Search by employee no, name, or phone…"
-        onSelect={setStaff}
-        renderResult={(s) => (
-          <div className="flex items-center justify-between">
-            <span className="text-ink">{s.fullName}</span>
-            <span className="text-xs text-ink-subtle">{s.employeeNo}</span>
-          </div>
-        )}
-      />
+      <StaffPicker onSelect={setStaff} />
       {staff && (
         <>
           <p className="mt-1 mb-3 text-xs text-ink-muted">

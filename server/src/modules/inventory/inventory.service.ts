@@ -25,6 +25,7 @@ import {
   type ItemRow,
   type SupplierRow,
   type PurchaseOrderRow,
+  type StockMovementRow,
 } from './inventory.repository';
 
 /* ---------------- views ---------------- */
@@ -42,6 +43,11 @@ const toSupplierView = (r: SupplierRow): SupplierView => ({ id: r.id, name: r.na
 
 export type PurchaseOrderView = { id: string; poNo: string; supplierId: string; orderDate: string; status: string; total: string; createdBy: string | null };
 const toPoView = (r: PurchaseOrderRow): PurchaseOrderView => ({ id: r.id, poNo: r.po_no, supplierId: r.supplier_id, orderDate: r.order_date, status: r.status, total: r.total, createdBy: r.created_by });
+
+export type StockMovementView = { id: string; itemId: string; type: string; quantity: string; referenceType: string | null; referenceId: string | null; movedBy: string | null; movedAt: string };
+const toMovementView = (r: StockMovementRow): StockMovementView => ({
+  id: r.id, itemId: r.item_id, type: r.type, quantity: r.quantity, referenceType: r.reference_type, referenceId: r.reference_id, movedBy: r.moved_by, movedAt: r.moved_at,
+});
 
 export class InventoryService {
   constructor(
@@ -110,7 +116,7 @@ export class InventoryService {
       const rows = await this.movements.listForItem(uow, itemId, page);
       const hasMore = rows.length > page.limit;
       const trimmed = hasMore ? rows.slice(0, page.limit) : rows;
-      return { movements: trimmed, nextCursorId: hasMore ? trimmed[trimmed.length - 1]!.id : null };
+      return { movements: trimmed.map(toMovementView), nextCursorId: hasMore ? trimmed[trimmed.length - 1]!.id : null };
     });
   }
 

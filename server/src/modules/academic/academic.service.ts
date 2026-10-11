@@ -39,6 +39,7 @@ import {
   type RoomRow,
   type SectionWithStrength,
   type SubjectRow,
+  type SubjectTeacherRow,
   type TermRow,
 } from './academic.repository';
 
@@ -79,6 +80,31 @@ const toSectionView = (r: SectionWithStrength): SectionView => ({
 
 export type RoomView = { id: string; name: string; capacity: number | null; roomType: string };
 const toRoomView = (r: RoomRow): RoomView => ({ id: r.id, name: r.name, capacity: r.capacity, roomType: r.room_type });
+
+export type SubjectTeacherAssignmentView = {
+  id: string;
+  academicYearId: string;
+  sectionId: string;
+  subjectId: string;
+  staffId: string;
+  subjectName: string;
+  sectionName: string;
+  className: string;
+  staffName: string;
+};
+const toSubjectTeacherAssignmentView = (
+  r: SubjectTeacherRow & { subject_name: string; section_name: string; class_name: string; staff_name: string },
+): SubjectTeacherAssignmentView => ({
+  id: r.id,
+  academicYearId: r.academic_year_id,
+  sectionId: r.section_id,
+  subjectId: r.subject_id,
+  staffId: r.staff_id,
+  subjectName: r.subject_name,
+  sectionName: r.section_name,
+  className: r.class_name,
+  staffName: r.staff_name,
+});
 
 export type ClassSubjectView = { id: string; classId: string; subjectId: string; isMandatory: boolean; subjectName: string; subjectCode: string };
 const toClassSubjectView = (r: ClassSubjectRow & { subject_name: string; subject_code: string }): ClassSubjectView => ({
@@ -481,8 +507,10 @@ export class AcademicService {
     actor: Actor,
     yearId: string,
     filters: { sectionId?: string | undefined; staffId?: string | undefined } = {},
-  ) {
-    return readTransaction(actor, (uow) => this.subjectTeachers.listForYear(uow, yearId, filters));
+  ): Promise<SubjectTeacherAssignmentView[]> {
+    return readTransaction(actor, async (uow) =>
+      (await this.subjectTeachers.listForYear(uow, yearId, filters)).map(toSubjectTeacherAssignmentView),
+    );
   }
 
   /**

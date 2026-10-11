@@ -11,6 +11,7 @@ import { PageLoading, ErrorState } from '@/components/ui/feedback'
 import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
+import { RequirePermission } from '@/components/protected-route'
 import { useToast } from '@/components/ui/toast'
 import type { PurchaseOrderDetail, SupplierView } from './types'
 import { ReceivePoDialog } from './receive-po-dialog'
@@ -56,6 +57,7 @@ export function PoDetailPage() {
   const fullyReceived = p.items.every((it) => Number(it.received) >= Number(it.quantity))
 
   return (
+    <RequirePermission anyOf={['inventory.read']}>
     <div className="mx-auto max-w-3xl">
       <Button variant="ghost" size="sm" onClick={() => navigate('/inventory')} className="mb-2">
         <ArrowLeft className="size-4" />
@@ -119,5 +121,6 @@ export function PoDetailPage() {
 
       {receiveOpen && <ReceivePoDialog poId={id} lines={p.items} onClose={() => setReceiveOpen(false)} />}
     </div>
+    </RequirePermission>
   )
 }

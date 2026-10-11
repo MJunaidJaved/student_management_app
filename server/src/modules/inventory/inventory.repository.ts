@@ -134,6 +134,9 @@ export class ItemStockRepository {
   }
 }
 
+// This table's actual timestamp column is `moved_at`, not `created_at`/`updated_at`
+// (declared via BaseRow only to satisfy BaseRepository's generic constraint —
+// those two columns don't exist on `stock_movements` and are never read).
 export type StockMovementRow = BaseRow & {
   item_id: string;
   type: string;
@@ -141,6 +144,7 @@ export type StockMovementRow = BaseRow & {
   reference_type: string | null;
   reference_id: string | null;
   moved_by: string | null;
+  moved_at: string;
 };
 
 export class StockMovementRepository extends BaseRepository<StockMovementRow> {

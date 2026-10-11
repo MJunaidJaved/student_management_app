@@ -37,8 +37,8 @@ export function SectionTimetableTab() {
   const sortedPeriods = [...(periods.data?.periods ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
   const entryFor = (day: number, periodId: string) => entries.data?.entries.find((e) => e.dayOfWeek === day && e.periodId === periodId) ?? null
   const assignmentName = (e: TimetableEntryView) => {
-    const a = assignments.data?.assignments.find((x) => x.subject_id === e.subjectId && x.staff_id === e.staffId)
-    return a ? { subject: a.subject_name, staff: a.staff_name } : { subject: 'Subject', staff: 'Staff' }
+    const a = assignments.data?.assignments.find((x) => x.subjectId === e.subjectId && x.staffId === e.staffId)
+    return a ? { subject: a.subjectName, staff: a.staffName } : { subject: 'Subject', staff: 'Staff' }
   }
 
   return (

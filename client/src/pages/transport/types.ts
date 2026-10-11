@@ -6,10 +6,7 @@ export type AllocationView = { id: string; enrollmentId: string; routeStopId: st
 
 export type VehicleOccupancy = { capacity: number; occupied: number }
 
-// These three endpoints return raw repository rows (snake_case) rather than
-// a mapped camelCase view — a found-not-fixed inconsistency shared with
-// several other report-style endpoints in this backend.
-export type RouteSheetRow = { stop_id: string; stop_name: string; stop_order: number; pickup_time: string | null; student_name: string; admission_no: string }
-export type StudentsForRouteRow = { enrollment_id: string; student_name: string; admission_no: string; stop_name: string }
+export type RouteSheetRow = { stopId: string; stopName: string; stopOrder: number; pickupTime: string | null; studentName: string; admissionNo: string }
+export type StudentsForRouteRow = { enrollmentId: string; studentName: string; admissionNo: string; stopName: string }
 
 export type ComplianceReport = { driversExpiring: DriverView[]; vehiclesExpiring: VehicleView[]; windowDays: number }

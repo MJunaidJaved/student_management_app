@@ -4,11 +4,12 @@ import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StudentPicker, type PickableStudent } from '@/components/student-picker'
+import { StaffPicker, type PickableStaff } from '@/components/staff-picker'
 import type { BookListItem, BorrowerType } from './types'
 
-type SearchStudent = { id: string; admissionNo: string; firstName: string; lastName: string | null }
-type SearchStaff = { id: string; employeeNo: string; fullName: string }
+type SearchStudent = PickableStudent
+type SearchStaff = PickableStaff
 
 export function IssueBookDialog({ book, onClose }: { book: BookListItem; onClose: () => void }) {
   const { show } = useToast()
@@ -41,35 +42,7 @@ export function IssueBookDialog({ book, onClose }: { book: BookListItem; onClose
           </Button>
         </div>
 
-        {borrowerType === 'student' ? (
-          <EntitySearchBox<SearchStudent>
-            endpoint="/search"
-            resultsKey="students"
-            placeholder="Search by admission no, name, or phone…"
-            onSelect={setStudent}
-            renderResult={(s) => (
-              <div className="flex items-center justify-between">
-                <span className="text-ink">
-                  {s.firstName} {s.lastName ?? ''}
-                </span>
-                <span className="text-xs text-ink-subtle">{s.admissionNo}</span>
-              </div>
-            )}
-          />
-        ) : (
-          <EntitySearchBox<SearchStaff>
-            endpoint="/staff-search"
-            resultsKey="staff"
-            placeholder="Search by employee no, name, or phone…"
-            onSelect={setStaff}
-            renderResult={(s) => (
-              <div className="flex items-center justify-between">
-                <span className="text-ink">{s.fullName}</span>
-                <span className="text-xs text-ink-subtle">{s.employeeNo}</span>
-              </div>
-            )}
-          />
-        )}
+        {borrowerType === 'student' ? <StudentPicker onSelect={setStudent} /> : <StaffPicker onSelect={setStaff} />}
 
         {borrowerType === 'student' && student && (
           <p className="text-xs text-ink-muted">

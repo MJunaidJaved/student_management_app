@@ -4,9 +4,7 @@ import { EmptyState, PageLoading, ErrorState } from '@/components/ui/feedback'
 import { useApiQuery } from '@/hooks/use-api-query'
 import type { BookIssueListItem } from './types'
 
-// Raw repository row (snake_case), not a mapped view — another
-// found-not-fixed inconsistency in this endpoint.
-type MostBorrowedItem = { book_id: string; title: string; accession_no: string; times_issued: number }
+type MostBorrowedItem = { bookId: string; title: string; accessionNo: string; timesIssued: number }
 
 export function ReportsTab() {
   const overdue = useApiQuery<{ overdue: BookIssueListItem[] }>(['library', 'overdue'], '/reports/library/overdue')
@@ -68,11 +66,11 @@ export function ReportsTab() {
             </Thead>
             <Tbody>
               {mostBorrowed.data.books.map((b) => (
-                <Tr key={b.book_id}>
+                <Tr key={b.bookId}>
                   <Td className="font-medium text-ink">
-                    {b.title} <span className="text-xs text-ink-subtle">({b.accession_no})</span>
+                    {b.title} <span className="text-xs text-ink-subtle">({b.accessionNo})</span>
                   </Td>
-                  <Td>{b.times_issued}</Td>
+                  <Td>{b.timesIssued}</Td>
                 </Tr>
               ))}
             </Tbody>

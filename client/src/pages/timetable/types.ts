@@ -13,19 +13,16 @@ export type TimetableEntryView = {
 
 export type RoomView = { id: string; name: string; capacity: number | null; roomType: string }
 
-// `/academic/years/:id/subject-teachers` returns the repository row shape
-// unmapped (snake_case, plus audit columns) rather than the camelCase view
-// every other endpoint uses — a found-not-fixed backend inconsistency.
 export type SubjectTeacherAssignment = {
   id: string
-  academic_year_id: string
-  section_id: string
-  subject_id: string
-  staff_id: string
-  subject_name: string
-  section_name: string
-  class_name: string
-  staff_name: string
+  academicYearId: string
+  sectionId: string
+  subjectId: string
+  staffId: string
+  subjectName: string
+  sectionName: string
+  className: string
+  staffName: string
 }
 
 export type SubstitutionListItem = {

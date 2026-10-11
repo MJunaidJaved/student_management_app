@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { RequirePermission } from '@/components/protected-route'
-import { cn } from '@/lib/utils'
+import { Tabs } from '@/components/ui/tabs'
 import { YearsTab } from './years-tab'
 import { ClassesTab } from './classes-tab'
 import { SectionsTab } from './sections-tab'
@@ -25,20 +25,7 @@ export function AcademicSetupPage() {
       <div>
         <PageHeader title="Academic Setup" description="Years, terms, classes, sections, subjects and rooms." />
 
-        <div className="mb-4 flex gap-1 border-b border-border">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                'border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-                tab === t.key ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-muted hover:text-ink',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
         {tab === 'years' && <YearsTab />}
         {tab === 'classes' && <ClassesTab />}

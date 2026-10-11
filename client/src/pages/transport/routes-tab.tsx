@@ -113,11 +113,11 @@ function RouteExpansion({ route }: { route: RouteView }) {
             </Thead>
             <Tbody>
               {sheet.data.sheet.map((r, i) => (
-                <Tr key={`${r.stop_id}-${i}`}>
-                  <Td>{r.stop_name}</Td>
-                  <Td>{r.pickup_time?.slice(0, 5) ?? '—'}</Td>
-                  <Td className="font-medium text-ink">{r.student_name}</Td>
-                  <Td>{r.admission_no}</Td>
+                <Tr key={`${r.stopId}-${i}`}>
+                  <Td>{r.stopName}</Td>
+                  <Td>{r.pickupTime?.slice(0, 5) ?? '—'}</Td>
+                  <Td className="font-medium text-ink">{r.studentName}</Td>
+                  <Td>{r.admissionNo}</Td>
                 </Tr>
               ))}
             </Tbody>

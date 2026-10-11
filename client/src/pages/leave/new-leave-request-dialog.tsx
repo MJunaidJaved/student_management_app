@@ -8,11 +8,11 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StudentPicker, type PickableStudent } from '@/components/student-picker'
 import type { LeaveTypeView } from './types'
 
 type FormValues = { leaveTypeId: string; fromDate: string; toDate: string; reason: string }
-type SearchStudent = { id: string; admissionNo: string; firstName: string; lastName: string | null }
+type SearchStudent = PickableStudent
 
 export function NewLeaveRequestDialog({ onClose }: { onClose: () => void }) {
   const { hasPermission } = useAuth()
@@ -91,20 +91,7 @@ export function NewLeaveRequestDialog({ onClose }: { onClose: () => void }) {
         {applicantType === 'student' && (
           <div>
             <Label>Student</Label>
-            <EntitySearchBox<SearchStudent>
-              endpoint="/search"
-              resultsKey="students"
-              placeholder="Search by admission no, name, or phone…"
-              onSelect={selectStudent}
-              renderResult={(s) => (
-                <div className="flex items-center justify-between">
-                  <span className="text-ink">
-                    {s.firstName} {s.lastName ?? ''}
-                  </span>
-                  <span className="text-xs text-ink-subtle">{s.admissionNo}</span>
-                </div>
-              )}
-            />
+            <StudentPicker onSelect={selectStudent} />
             {student && (
               <p className="mt-1 text-xs text-ink-muted">
                 Selected: {student.firstName} {student.lastName ?? ''} ({student.admissionNo})

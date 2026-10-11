@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { RequirePermission } from '@/components/protected-route'
-import { cn } from '@/lib/utils'
+import { Tabs } from '@/components/ui/tabs'
 import { useAuth } from '@/lib/auth-context'
 import { ExamsListTab } from './exams-list-tab'
 import { GradingSetupTab } from './grading-setup-tab'
+
+const TABS = [
+  { key: 'exams', label: 'Exams' },
+  { key: 'grading', label: 'Grading Setup' },
+] as const
 
 export function ExamsPage() {
   const { hasPermission } = useAuth()
@@ -16,22 +21,7 @@ export function ExamsPage() {
       <div>
         <PageHeader title="Exams" description="Exam schedules, marks entry, grading, and report cards." />
 
-        {canGrading && (
-          <div className="mb-4 flex gap-1 border-b border-border">
-            {(['exams', 'grading'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  'border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors',
-                  tab === t ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-muted hover:text-ink',
-                )}
-              >
-                {t === 'grading' ? 'Grading Setup' : 'Exams'}
-              </button>
-            ))}
-          </div>
-        )}
+        {canGrading && <Tabs tabs={TABS} active={tab} onChange={setTab} />}
 
         {tab === 'exams' ? <ExamsListTab /> : <GradingSetupTab />}
       </div>

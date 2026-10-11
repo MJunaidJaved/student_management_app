@@ -155,6 +155,15 @@ export class LibraryService {
     });
   }
 
+  /** A borrower's fines (any status) — the same ownership rule as their issue history, since a fine is always tied to one of their issues. */
+  async finesForBorrower(actor: Actor, borrowerType: BorrowerType, borrowerId: string): Promise<(LibraryFineView & { title: string; accessionNo: string })[]> {
+    return readTransaction(actor, async (uow) => {
+      const held = actor.userId === null ? new Set<string>() : await this.permissions.forUser(actor.userId);
+      await this.assertCanViewBorrower(uow, actor, held, borrowerType, borrowerId);
+      return (await this.fines.forBorrower(uow, borrowerType, borrowerId)).map((r) => ({ ...toFineView(r), title: r.title, accessionNo: r.accession_no }));
+    });
+  }
+
   /* ---------------- issue, return, renew, lose ---------------- */
 
   async issueBook(actor: Actor, input: { bookId: string; borrowerType: BorrowerType; borrowerId: string }): Promise<BookIssueView> {
@@ -267,8 +276,15 @@ export class LibraryService {
     return readTransaction(actor, async (uow) => (await this.issues.overdue(uow)).map((r) => ({ ...toIssueView(r), title: r.title, accessionNo: r.accession_no })));
   }
 
-  async mostBorrowedReport(actor: Actor, limit = 20) {
-    return readTransaction(actor, (uow) => this.issues.mostBorrowed(uow, limit));
+  async mostBorrowedReport(actor: Actor, limit = 20): Promise<{ bookId: string; title: string; accessionNo: string; timesIssued: number }[]> {
+    return readTransaction(actor, async (uow) =>
+      (await this.issues.mostBorrowed(uow, limit)).map((r) => ({
+        bookId: r.book_id,
+        title: r.title,
+        accessionNo: r.accession_no,
+        timesIssued: r.times_issued,
+      })),
+    );
   }
 }
 

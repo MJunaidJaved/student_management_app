@@ -11,12 +11,11 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StudentPicker } from '@/components/student-picker'
+import { StaffPicker } from '@/components/staff-picker'
 import type { BookIssueListItem, BorrowerType, LibraryFineView } from './types'
-import type { Envelope } from '@/types/api'
 
-type SearchStudent = { id: string; admissionNo: string; firstName: string; lastName: string | null }
-type SearchStaff = { id: string; employeeNo: string; fullName: string }
+type FineListItem = LibraryFineView & { title: string; accessionNo: string }
 
 export function CirculationTab() {
   const { hasPermission } = useAuth()
@@ -26,29 +25,27 @@ export function CirculationTab() {
   const [borrower, setBorrower] = useState<{ id: string; label: string } | null>(null)
   const [lostIssueId, setLostIssueId] = useState<string | null>(null)
   const [waiveFineId, setWaiveFineId] = useState<string | null>(null)
-  // The backend has no endpoint to list a borrower's fines — only
-  // `/library-fines/mine` (self-service) and act-by-id actions. The only
-  // fine ids this UI can ever learn are the ones returned directly by a
-  // return/mark-lost call, so recently-created fines are tracked here for
-  // the current session rather than fetched from a list that doesn't exist.
-  const [recentFines, setRecentFines] = useState<LibraryFineView[]>([])
 
   const issues = useApiQuery<{ issues: BookIssueListItem[] }>(
     ['library', 'issues', borrowerType, borrower?.id],
     `/borrowers/${borrowerType}/${borrower?.id}/book-issues`,
     { enabled: !!borrower },
   )
+  const fines = useApiQuery<{ fines: FineListItem[] }>(
+    ['library', 'fines', borrowerType, borrower?.id],
+    `/borrowers/${borrowerType}/${borrower?.id}/library-fines`,
+    { enabled: !!borrower },
+  )
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['library', 'issues', borrowerType, borrower?.id] })
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['library', 'issues', borrowerType, borrower?.id] })
+    queryClient.invalidateQueries({ queryKey: ['library', 'fines', borrowerType, borrower?.id] })
+  }
 
   const returnBook = useMutation({
-    mutationFn: async (issueId: string) => {
-      const res = await apiClient.post<Envelope<{ issue: unknown; fine: LibraryFineView | null }>>(`/book-issues/${issueId}/return`)
-      return res.data.data
-    },
-    onSuccess: (data) => {
-      show('success', data.fine ? `Book returned — late fine of ${data.fine.amount} created` : 'Book returned')
-      if (data.fine) setRecentFines((f) => [data.fine!, ...f])
+    mutationFn: async (issueId: string) => apiClient.post(`/book-issues/${issueId}/return`),
+    onSuccess: () => {
+      show('success', 'Book returned')
       invalidate()
     },
     onError: (err) => show('error', apiErrorMessage(err).message),
@@ -64,13 +61,9 @@ export function CirculationTab() {
 
   const lostForm = useForm<{ replacementCost: string }>()
   const markLost = useMutation({
-    mutationFn: async (v: { replacementCost: string }) => {
-      const res = await apiClient.post<Envelope<{ issue: unknown; fine: LibraryFineView }>>(`/book-issues/${lostIssueId}/mark-lost`, v)
-      return res.data.data
-    },
-    onSuccess: (data) => {
-      show('success', `Book marked lost — fine of ${data.fine.amount} created`)
-      setRecentFines((f) => [data.fine, ...f])
+    mutationFn: async (v: { replacementCost: string }) => apiClient.post(`/book-issues/${lostIssueId}/mark-lost`, v),
+    onSuccess: () => {
+      show('success', 'Book marked lost')
       invalidate()
       setLostIssueId(null)
       lostForm.reset()
@@ -83,7 +76,7 @@ export function CirculationTab() {
     mutationFn: async (v: { reason: string }) => apiClient.post(`/library-fines/${waiveFineId}/waive`, v),
     onSuccess: () => {
       show('success', 'Fine waived')
-      setRecentFines((fs) => fs.map((f) => (f.id === waiveFineId ? { ...f, status: 'waived' } : f)))
+      invalidate()
       setWaiveFineId(null)
       waiveForm.reset()
     },
@@ -103,33 +96,9 @@ export function CirculationTab() {
         </div>
 
         {borrowerType === 'student' ? (
-          <EntitySearchBox<SearchStudent>
-            endpoint="/search"
-            resultsKey="students"
-            placeholder="Search by admission no, name, or phone…"
-            onSelect={(s) => setBorrower({ id: s.id, label: `${s.firstName} ${s.lastName ?? ''} (${s.admissionNo})` })}
-            renderResult={(s) => (
-              <div className="flex items-center justify-between">
-                <span className="text-ink">
-                  {s.firstName} {s.lastName ?? ''}
-                </span>
-                <span className="text-xs text-ink-subtle">{s.admissionNo}</span>
-              </div>
-            )}
-          />
+          <StudentPicker onSelect={(s) => setBorrower({ id: s.id, label: `${s.firstName} ${s.lastName ?? ''} (${s.admissionNo})` })} />
         ) : (
-          <EntitySearchBox<SearchStaff>
-            endpoint="/staff-search"
-            resultsKey="staff"
-            placeholder="Search by employee no, name, or phone…"
-            onSelect={(s) => setBorrower({ id: s.id, label: `${s.fullName} (${s.employeeNo})` })}
-            renderResult={(s) => (
-              <div className="flex items-center justify-between">
-                <span className="text-ink">{s.fullName}</span>
-                <span className="text-xs text-ink-subtle">{s.employeeNo}</span>
-              </div>
-            )}
-          />
+          <StaffPicker onSelect={(s) => setBorrower({ id: s.id, label: `${s.fullName} (${s.employeeNo})` })} />
         )}
         {borrower && <p className="mt-1 text-xs text-ink-muted">{borrower.label}</p>}
       </Card>
@@ -195,40 +164,47 @@ export function CirculationTab() {
         </Card>
       )}
 
-      {recentFines.length > 0 && (
+      {borrower && (
         <Card className="mt-4">
           <div className="p-4">
-            <h4 className="text-sm font-semibold text-ink">Fines Created This Session</h4>
-            <p className="text-xs text-ink-subtle">
-              The backend has no endpoint to look up a borrower's past fines, so only fines created during this session are shown here.
-            </p>
+            <h4 className="text-sm font-semibold text-ink">Fines</h4>
           </div>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>Amount</Th>
-                <Th>Status</Th>
-                <Th />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {recentFines.map((f) => (
-                <Tr key={f.id}>
-                  <Td>{f.amount}</Td>
-                  <Td>
-                    <Badge tone={statusTone(f.status)}>{f.status}</Badge>
-                  </Td>
-                  <Td>
-                    {f.status === 'unpaid' && hasPermission('library.manage_fines') && (
-                      <Button variant="ghost" size="sm" onClick={() => setWaiveFineId(f.id)}>
-                        Waive
-                      </Button>
-                    )}
-                  </Td>
+          {fines.isLoading ? (
+            <PageLoading />
+          ) : !fines.data || fines.data.fines.length === 0 ? (
+            <EmptyState title="No fines for this borrower" />
+          ) : (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>Book</Th>
+                  <Th>Amount</Th>
+                  <Th>Status</Th>
+                  <Th />
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
+              </Thead>
+              <Tbody>
+                {fines.data.fines.map((f) => (
+                  <Tr key={f.id}>
+                    <Td>
+                      {f.title} <span className="text-xs text-ink-subtle">({f.accessionNo})</span>
+                    </Td>
+                    <Td>{f.amount}</Td>
+                    <Td>
+                      <Badge tone={statusTone(f.status)}>{f.status}</Badge>
+                    </Td>
+                    <Td>
+                      {f.status === 'unpaid' && hasPermission('library.manage_fines') && (
+                        <Button variant="ghost" size="sm" onClick={() => setWaiveFineId(f.id)}>
+                          Waive
+                        </Button>
+                      )}
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          )}
         </Card>
       )}
 

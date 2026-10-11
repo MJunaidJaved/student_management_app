@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { RequirePermission } from '@/components/protected-route'
-import { cn } from '@/lib/utils'
+import { Tabs } from '@/components/ui/tabs'
 import { useAuth } from '@/lib/auth-context'
 import { InvoicesTab } from './invoices-tab'
 import { FeeSetupTab } from './fee-setup-tab'
+
+const TABS = [
+  { key: 'invoices', label: 'Invoices' },
+  { key: 'setup', label: 'Fee Setup' },
+] as const
 
 export function FeesPage() {
   const { hasPermission } = useAuth()
@@ -16,22 +21,7 @@ export function FeesPage() {
       <div>
         <PageHeader title="Fees" description="Invoices, payments and fee structure." />
 
-        {canSetup && (
-          <div className="mb-4 flex gap-1 border-b border-border">
-            {(['invoices', 'setup'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  'border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors',
-                  tab === t ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-muted hover:text-ink',
-                )}
-              >
-                {t === 'setup' ? 'Fee Setup' : t}
-              </button>
-            ))}
-          </div>
-        )}
+        {canSetup && <Tabs tabs={TABS} active={tab} onChange={setTab} />}
 
         {tab === 'invoices' ? <InvoicesTab /> : <FeeSetupTab />}
       </div>

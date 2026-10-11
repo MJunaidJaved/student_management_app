@@ -7,16 +7,13 @@ export type PurchaseOrderView = { id: string; poNo: string; supplierId: string; 
 export type PurchaseOrderLine = { id: string; itemId: string; itemName: string; sku: string; quantity: string; unitCost: string; received: string }
 export type PurchaseOrderDetail = PurchaseOrderView & { items: PurchaseOrderLine[] }
 
-// `/items/:id/movements` returns raw repository rows (snake_case, no view
-// mapping) — a found-not-fixed backend inconsistency, unlike every other
-// inventory endpoint which returns a camelCase view.
-export type StockMovementRow = {
+export type StockMovementView = {
   id: string
-  item_id: string
+  itemId: string
   type: 'in' | 'out' | 'adjustment'
   quantity: string
-  reference_type: string | null
-  reference_id: string | null
-  moved_by: string | null
-  moved_at: string
+  referenceType: string | null
+  referenceId: string | null
+  movedBy: string | null
+  movedAt: string
 }

@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/toast'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
 import { useAcademicLookups } from '@/hooks/use-academic-lookups'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StaffPicker, type PickableStaff } from '@/components/staff-picker'
 import type { LeaveTypeView, StaffLeaveBalanceView } from './types'
 
 function LeaveTypesCard() {
@@ -100,7 +100,7 @@ function LeaveTypesCard() {
   )
 }
 
-type SearchStaff = { id: string; employeeNo: string; fullName: string }
+type SearchStaff = PickableStaff
 
 function StaffBalancesCard() {
   const { hasPermission } = useAuth()
@@ -140,18 +140,7 @@ function StaffBalancesCard() {
     <Card className="p-4">
       <h3 className="mb-3 text-sm font-semibold text-ink">Staff Leave Balances</h3>
       <div className="mb-3">
-        <EntitySearchBox<SearchStaff>
-          endpoint="/staff-search"
-          resultsKey="staff"
-          placeholder="Search by employee no, name, or phone…"
-          onSelect={setStaff}
-          renderResult={(s) => (
-            <div className="flex items-center justify-between">
-              <span className="text-ink">{s.fullName}</span>
-              <span className="text-xs text-ink-subtle">{s.employeeNo}</span>
-            </div>
-          )}
-        />
+        <StaffPicker onSelect={setStaff} />
         {staff && <p className="mt-1 text-xs text-ink-muted">{staff.fullName} ({staff.employeeNo})</p>}
       </div>
 

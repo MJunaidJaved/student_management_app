@@ -8,11 +8,11 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useToast } from '@/components/ui/toast'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAcademicLookups } from '@/hooks/use-academic-lookups'
-import { EntitySearchBox } from '@/components/entity-search-box'
+import { StaffPicker, type PickableStaff } from '@/components/staff-picker'
 import type { PeriodView, TimetableEntryView } from './types'
 import { DAY_NAMES } from './types'
 
-type SearchStaff = { id: string; employeeNo: string; fullName: string }
+type SearchStaff = PickableStaff
 type FormValues = { subDate: string; timetableEntryId: string; reason: string }
 
 export function AssignSubstitutionDialog({ onClose }: { onClose: () => void }) {
@@ -99,18 +99,7 @@ export function AssignSubstitutionDialog({ onClose }: { onClose: () => void }) {
 
         <div>
           <Label>Substitute Teacher</Label>
-          <EntitySearchBox<SearchStaff>
-            endpoint="/staff-search"
-            resultsKey="staff"
-            placeholder="Search by employee no, name, or phone…"
-            onSelect={setSubstitute}
-            renderResult={(s) => (
-              <div className="flex items-center justify-between">
-                <span className="text-ink">{s.fullName}</span>
-                <span className="text-xs text-ink-subtle">{s.employeeNo}</span>
-              </div>
-            )}
-          />
+          <StaffPicker onSelect={setSubstitute} />
           {substitute && (
             <p className="mt-1 text-xs text-ink-muted">
               {substitute.fullName} ({substitute.employeeNo})

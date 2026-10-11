@@ -13,6 +13,7 @@ import { apiClient, apiErrorMessage } from '@/lib/api-client'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAcademicLookups } from '@/hooks/use-academic-lookups'
 import { useAuth } from '@/lib/auth-context'
+import { RequirePermission } from '@/components/protected-route'
 import { useToast } from '@/components/ui/toast'
 import type { ExamScheduleView, ExamView, ReportCardListItem } from './types'
 import { ScheduleDialog } from './schedule-dialog'
@@ -89,6 +90,7 @@ export function ExamDetailPage() {
   const classesForReports = [...new Set((schedules.data?.schedules ?? []).map((s) => s.classId))]
 
   return (
+    <RequirePermission anyOf={['exams.read', 'exams.read_own']}>
     <div>
       <Button variant="ghost" size="sm" onClick={() => navigate('/exams')} className="mb-2">
         <ArrowLeft className="size-4" />
@@ -253,5 +255,6 @@ export function ExamDetailPage() {
 
       {scheduleOpen && <ScheduleDialog examId={id} onClose={() => setScheduleOpen(false)} />}
     </div>
+    </RequirePermission>
   )
 }

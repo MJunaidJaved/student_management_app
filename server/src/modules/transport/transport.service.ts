@@ -103,17 +103,31 @@ export class TransportService {
     });
   }
 
-  async routeSheet(actor: Actor, routeId: string) {
+  async routeSheet(actor: Actor, routeId: string): Promise<{ stopId: string; stopName: string; stopOrder: number; pickupTime: string | null; studentName: string; admissionNo: string }[]> {
     return readTransaction(actor, async (uow) => {
       await this.routes.getById(uow, routeId);
-      return this.routes.sheet(uow, routeId);
+      const rows = await this.routes.sheet(uow, routeId);
+      return rows.map((r) => ({
+        stopId: r.stop_id,
+        stopName: r.stop_name,
+        stopOrder: r.stop_order,
+        pickupTime: r.pickup_time,
+        studentName: r.student_name,
+        admissionNo: r.admission_no,
+      }));
     });
   }
 
-  async studentsForRoute(actor: Actor, routeId: string) {
+  async studentsForRoute(actor: Actor, routeId: string): Promise<{ enrollmentId: string; studentName: string; admissionNo: string; stopName: string }[]> {
     return readTransaction(actor, async (uow) => {
       await this.routes.getById(uow, routeId);
-      return this.allocations.studentsForRoute(uow, routeId);
+      const rows = await this.allocations.studentsForRoute(uow, routeId);
+      return rows.map((r) => ({
+        enrollmentId: r.enrollment_id,
+        studentName: r.student_name,
+        admissionNo: r.admission_no,
+        stopName: r.stop_name,
+      }));
     });
   }
 
