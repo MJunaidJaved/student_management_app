@@ -2,11 +2,17 @@ import { useState } from 'react'
 import { Menu, Search, Bell, LogOut, ChevronDown, User } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useNavigate } from 'react-router-dom'
+import { useApiQuery } from '@/hooks/use-api-query'
+
+type NotificationItem = { id: string; status: string }
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { me, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
+
+  const notifications = useApiQuery<{ items: NotificationItem[] }>(['notifications', 'badge'], '/notifications?limit=50')
+  const unreadCount = notifications.data?.items.filter((n) => n.status !== 'read').length ?? 0
 
   async function handleLogout() {
     await logout()
@@ -30,8 +36,17 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <button className="relative rounded-full p-2 text-ink-muted hover:bg-surface-muted">
+        <button
+          onClick={() => navigate('/notifications')}
+          className="relative rounded-full p-2 text-ink-muted hover:bg-surface-muted"
+          aria-label="Notifications"
+        >
           <Bell className="size-5" />
+          {unreadCount > 0 && (
+            <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-semibold leading-none text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
 
         <div className="relative">

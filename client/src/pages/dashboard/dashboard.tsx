@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PageLoading, EmptyState } from '@/components/ui/feedback'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
 type HeadcountSummary = { summary: { status: string; gender: string; count: number }[] }
 type OutstandingSummary = { invoiceCount: number; outstanding: string; overdue: string }
@@ -98,32 +98,76 @@ export function DashboardPage() {
         )}
       </div>
 
-      {canFees && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Collections by Payment Method — this month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {collection.isLoading ? (
-              <PageLoading />
-            ) : chartData.length === 0 ? (
-              <EmptyState title="No payments recorded yet this month" />
-            ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="method" tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }}
-                    formatter={(v) => money(Number(v))}
-                  />
-                  <Bar dataKey="total" fill="var(--color-brand-500)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+      {(canFees || canOutstanding) && (
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {canFees && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Collections by Payment Method — this month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {collection.isLoading ? (
+                  <PageLoading />
+                ) : chartData.length === 0 ? (
+                  <EmptyState title="No payments recorded yet this month" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                      <XAxis dataKey="method" tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }}
+                        formatter={(v) => money(Number(v))}
+                      />
+                      <Bar dataKey="total" fill="var(--color-brand-500)" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {canFees && canOutstanding && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Fee Collection Snapshot</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {collection.isLoading || outstanding.isLoading ? (
+                  <PageLoading />
+                ) : (totalCollected ?? 0) === 0 && Number(outstanding.data?.outstanding ?? 0) === 0 ? (
+                  <EmptyState title="No fee activity yet" />
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Collected (this month)', value: totalCollected ?? 0 },
+                            { name: 'Outstanding (all time)', value: Number(outstanding.data?.outstanding ?? 0) },
+                          ]}
+                          dataKey="value"
+                          innerRadius={55}
+                          outerRadius={80}
+                          paddingAngle={2}
+                        >
+                          <Cell fill="var(--color-success-500)" />
+                          <Cell fill="var(--color-danger-500)" />
+                        </Pie>
+                        <Tooltip formatter={(v) => money(Number(v))} contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }} />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <p className="mt-2 text-center text-xs text-ink-subtle">
+                      Collected is scoped to this month; outstanding is the current running total across all invoices.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   )
