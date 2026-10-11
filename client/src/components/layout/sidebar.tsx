@@ -1,45 +1,44 @@
 import { NavLink } from 'react-router-dom'
-import { GraduationCap, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { NAV_GROUPS } from '@/lib/nav-config'
 import { useAuth } from '@/lib/auth-context'
+import { SCHOOL } from '@/lib/school'
 import { cn } from '@/lib/utils'
+import { SchoolLogo } from '@/components/school-logo'
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { hasAnyPermission } = useAuth()
 
   return (
     <>
-      {open && (
-        <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={onClose} aria-hidden />
-      )}
+      {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} aria-hidden />}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-school-indigo transition-transform lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between px-5">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500 text-white">
-              <GraduationCap className="size-5" />
-            </div>
-            <span className="text-base font-semibold text-ink">SchoolSMS</span>
+        <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-4">
+          <div className="size-11 shrink-0 overflow-hidden rounded-full bg-white">
+            <SchoolLogo className="size-full" />
           </div>
-          <button onClick={onClose} className="rounded-md p-1 text-ink-muted hover:bg-surface-muted lg:hidden">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug text-white">{SCHOOL.name}</p>
+            <p className="text-xs text-brand-300">{SCHOOL.location}</p>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1 text-brand-200 hover:bg-white/10 lg:hidden" aria-label="Close menu">
             <X className="size-5" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-6">
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4 [scrollbar-color:rgba(255,255,255,0.15)_transparent]">
           {NAV_GROUPS.map((group, gi) => {
             const items = group.items.filter((item) => item.permissions.length === 0 || hasAnyPermission(item.permissions))
             if (items.length === 0) return null
             return (
               <div key={gi}>
                 {group.label && (
-                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-subtle">
-                    {group.label}
-                  </p>
+                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-300">{group.label}</p>
                 )}
                 <div className="space-y-0.5">
                   {items.map((item) => (
@@ -50,10 +49,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                       onClick={onClose}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                          'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
                           isActive
-                            ? 'bg-brand-50 text-brand-600'
-                            : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
+                            ? 'bg-white/10 font-semibold text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-laurel'
+                            : 'text-brand-200 hover:bg-white/5 hover:text-white',
                         )
                       }
                     >

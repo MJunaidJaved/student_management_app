@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PageLoading, EmptyState } from '@/components/ui/feedback'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { useAuth } from '@/lib/auth-context'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 type HeadcountSummary = { summary: { status: string; gender: string; count: number }[] }
 type OutstandingSummary = { invoiceCount: number; outstanding: string; overdue: string }
@@ -15,19 +15,26 @@ function sumActive(summary: { status: string; count: number }[]): number {
   return summary.filter((s) => s.status === 'active').reduce((acc, s) => acc + s.count, 0)
 }
 
-function firstOfMonth(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+function isoDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+
 function money(v: string | number): string {
-  return Number(v).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return `Rs ${Number(v).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`
 }
+
+function greeting(hour: number): string {
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function DashboardPage() {
   const { hasPermission, me } = useAuth()
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
   const canStudents = hasPermission('students.read')
   const canStaff = hasPermission('staff.read')
@@ -38,7 +45,7 @@ export function DashboardPage() {
   const staff = useApiQuery<HeadcountSummary>(['reports', 'staff'], '/reports/staff', { enabled: canStaff })
   const collection = useApiQuery<CollectionSummary>(
     ['reports', 'fees-collection'],
-    `/reports/fees/collection?from=${firstOfMonth()}&to=${todayIso()}`,
+    `/reports/fees/collection?from=${isoDay(monthStart)}&to=${isoDay(now)}`,
     { enabled: canFees },
   )
   const outstanding = useApiQuery<OutstandingSummary>(['reports', 'fees-outstanding'], '/reports/fees/outstanding', {
@@ -47,17 +54,25 @@ export function DashboardPage() {
 
   const totalStudents = students.data ? sumActive(students.data.summary) : null
   const totalStaff = staff.data ? sumActive(staff.data.summary) : null
-  const totalCollected = collection.data
-    ? collection.data.byMethod.reduce((acc, m) => acc + Number(m.total), 0)
-    : null
+  const totalCollected = collection.data ? collection.data.byMethod.reduce((acc, m) => acc + Number(m.total), 0) : null
 
-  const chartData = collection.data?.byMethod.map((m) => ({ method: m.method, total: Number(m.total) })) ?? []
+  const collectionData = collection.data?.byMethod.map((m) => ({ method: capitalize(m.method), total: Number(m.total) })) ?? []
 
+  const byGender = Object.entries(
+    (students.data?.summary ?? [])
+      .filter((s) => s.status === 'active')
+      .reduce<Record<string, number>>((acc, s) => ({ ...acc, [s.gender]: (acc[s.gender] ?? 0) + s.count }), {}),
+  ).sort((a, b) => b[1] - a[1])
+
+  const monthLabel = now.toLocaleDateString('en-GB', { month: 'long' })
   const anyCardVisible = canStudents || canStaff || canFees || canOutstanding
 
   return (
     <div>
-      <PageHeader title={`Welcome back, ${me?.user.username ?? ''}`} description="Here's what's happening across your school today." />
+      <PageHeader
+        title={`${greeting(now.getHours())}, ${me?.user.username ?? ''}`}
+        description={now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+      />
 
       {!anyCardVisible && (
         <EmptyState
@@ -66,61 +81,62 @@ export function DashboardPage() {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {canStudents && (
-          <StatCard
-            label="Active Students"
-            value={students.isLoading ? '…' : (totalStudents ?? 0)}
-            icon={Users}
-            accent="blue"
-          />
+          <StatCard label="Active students" value={students.isLoading ? '…' : (totalStudents ?? 0)} icon={Users} accent="blue" />
         )}
-        {canStaff && (
-          <StatCard label="Active Staff" value={staff.isLoading ? '…' : (totalStaff ?? 0)} icon={UserCog} accent="purple" />
-        )}
+        {canStaff && <StatCard label="Active staff" value={staff.isLoading ? '…' : (totalStaff ?? 0)} icon={UserCog} accent="purple" />}
         {canFees && (
           <StatCard
-            label="Collected This Month"
+            label={`Collected in ${monthLabel}`}
             value={collection.isLoading ? '…' : money(totalCollected ?? 0)}
             icon={Wallet}
             accent="success"
-            sublabel={`${firstOfMonth()} – ${todayIso()}`}
+            sublabel={`1 – ${now.getDate()} ${monthLabel}`}
           />
         )}
         {canOutstanding && (
           <StatCard
-            label="Outstanding Fees"
+            label="Outstanding fees"
             value={outstanding.isLoading ? '…' : money(outstanding.data?.outstanding ?? 0)}
             icon={AlertCircle}
             accent="red"
-            sublabel={outstanding.data ? `${outstanding.data.invoiceCount} invoice(s)` : undefined}
+            sublabel={outstanding.data ? `Across ${outstanding.data.invoiceCount} unpaid invoice(s)` : undefined}
           />
         )}
       </div>
 
-      {(canFees || canOutstanding) && (
-        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {(canFees || canStudents) && (
+        <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
           {canFees && (
-            <Card className="lg:col-span-2">
+            <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle>Collections by Payment Method — this month</CardTitle>
+                <CardTitle>Fee collections by payment method</CardTitle>
+                <span className="text-xs text-ink-subtle">{monthLabel}</span>
               </CardHeader>
               <CardContent>
                 {collection.isLoading ? (
                   <PageLoading />
-                ) : chartData.length === 0 ? (
-                  <EmptyState title="No payments recorded yet this month" />
+                ) : collectionData.length === 0 ? (
+                  <EmptyState title={`No payments recorded in ${monthLabel} yet`} />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                      <XAxis dataKey="method" tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
-                      <YAxis tick={{ fontSize: 12 }} stroke="var(--color-ink-subtle)" />
-                      <Tooltip
-                        contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }}
-                        formatter={(v) => money(Number(v))}
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={collectionData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                      <CartesianGrid stroke="var(--color-border)" strokeOpacity={0.6} vertical={false} />
+                      <XAxis dataKey="method" tick={{ fontSize: 12, fill: 'var(--color-ink-muted)' }} axisLine={false} tickLine={false} />
+                      <YAxis
+                        tick={{ fontSize: 12, fill: 'var(--color-ink-subtle)' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={72}
+                        tickFormatter={(v) => Number(v).toLocaleString('en-PK')}
                       />
-                      <Bar dataKey="total" fill="var(--color-brand-500)" radius={[6, 6, 0, 0]} />
+                      <Tooltip
+                        cursor={{ fill: 'var(--color-surface-muted)' }}
+                        contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }}
+                        formatter={(v) => [money(Number(v)), 'Collected']}
+                      />
+                      <Bar dataKey="total" fill="var(--color-chart-green)" radius={[4, 4, 0, 0]} maxBarSize={44} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -128,41 +144,35 @@ export function DashboardPage() {
             </Card>
           )}
 
-          {canFees && canOutstanding && (
+          {canStudents && (
             <Card>
               <CardHeader>
-                <CardTitle>Fee Collection Snapshot</CardTitle>
+                <CardTitle>Active students by gender</CardTitle>
               </CardHeader>
               <CardContent>
-                {collection.isLoading || outstanding.isLoading ? (
+                {students.isLoading ? (
                   <PageLoading />
-                ) : (totalCollected ?? 0) === 0 && Number(outstanding.data?.outstanding ?? 0) === 0 ? (
-                  <EmptyState title="No fee activity yet" />
+                ) : byGender.length === 0 ? (
+                  <EmptyState title="No active students yet" />
                 ) : (
-                  <>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Collected (this month)', value: totalCollected ?? 0 },
-                            { name: 'Outstanding (all time)', value: Number(outstanding.data?.outstanding ?? 0) },
-                          ]}
-                          dataKey="value"
-                          innerRadius={55}
-                          outerRadius={80}
-                          paddingAngle={2}
-                        >
-                          <Cell fill="var(--color-success-500)" />
-                          <Cell fill="var(--color-danger-500)" />
-                        </Pie>
-                        <Tooltip formatter={(v) => money(Number(v))} contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }} />
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <p className="mt-2 text-center text-xs text-ink-subtle">
-                      Collected is scoped to this month; outstanding is the current running total across all invoices.
-                    </p>
-                  </>
+                  <ul className="space-y-4">
+                    {byGender.map(([gender, count]) => {
+                      const pct = totalStudents ? Math.round((count / totalStudents) * 100) : 0
+                      return (
+                        <li key={gender}>
+                          <div className="mb-1.5 flex items-baseline justify-between text-sm">
+                            <span className="font-medium text-ink">{capitalize(gender)}</span>
+                            <span className="tabular-nums text-ink-muted">
+                              {count.toLocaleString()} <span className="text-ink-subtle">· {pct}%</span>
+                            </span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                            <div className="h-full rounded-full bg-chart-indigo" style={{ width: `${pct}%` }} />
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 )}
               </CardContent>
             </Card>

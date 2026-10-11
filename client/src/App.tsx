@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/lib/auth-context'
 import { ToastProvider } from '@/components/ui/toast'
 import { ProtectedRoute } from '@/components/protected-route'
+import { SplashGate } from '@/components/splash-screen'
 import { AppLayout } from '@/components/layout/app-layout'
 import { LoginPage } from '@/pages/auth/login'
 import { DashboardPage } from '@/pages/dashboard/dashboard'
@@ -64,6 +65,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
+          <SplashGate>
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
@@ -122,6 +124,7 @@ export default function App() {
               </Route>
             </Routes>
           </BrowserRouter>
+          </SplashGate>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

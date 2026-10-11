@@ -39,8 +39,9 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean }
 
 let refreshPromise: Promise<string> | null = null
 
-async function refreshAccessToken(): Promise<string> {
-  // Multiple requests can 401 at once; only one refresh call should fire.
+export async function refreshAccessToken(): Promise<string> {
+  // Only one refresh may be in flight: the backend rotates refresh tokens and
+  // treats a second use of the same token as theft, revoking the whole session.
   if (!refreshPromise) {
     refreshPromise = axios
       .post<{ data: { accessToken: string } }>(

@@ -1,70 +1,85 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand */
-  --color-brand-50: #f2f0ff;
-  --color-brand-100: #e5e1ff;
-  --color-brand-200: #cbc3ff;
-  --color-brand-300: #a99bff;
-  --color-brand-400: #8a76ff;
-  --color-brand-500: #6c56f9;
-  --color-brand-600: #5a3fe0;
-  --color-brand-700: #4a32b8;
-  --color-brand-800: #3b2890;
-  --color-brand-900: #2e2070;
+  /* School palette (The Junior Cambridge School): indigo + laurel green. */
+  --color-school-indigo: #221b70;
+  --color-school-green: #26664c;
+  --color-mist: #dddeeb;
+  /* Light tints of the school green, for use on the dark indigo surfaces only. */
+  --color-laurel: #7fbf9f;
+  --color-laurel-soft: #a9d6bf;
+  --color-canvas: #fbfafa;
+
+  /* Brand = school indigo. 500 is the exact school colour. */
+  --color-brand-50: #f0eff8;
+  --color-brand-100: #e2e1f1;
+  --color-brand-200: #c4c1e3;
+  --color-brand-300: #9590cc;
+  --color-brand-400: #5c55ae;
+  --color-brand-500: #221b70;
+  --color-brand-600: #1c165e;
+  --color-brand-700: #16114b;
+  --color-brand-800: #100c38;
+  --color-brand-900: #0b0826;
 
   /* Surface / neutral */
   --color-surface: #ffffff;
-  --color-surface-muted: #f6f7fb;
-  --color-border: #e8e9f1;
-  --color-ink: #1a1b2e;
-  --color-ink-muted: #6b6d80;
-  --color-ink-subtle: #9496a8;
+  --color-surface-muted: #f3f3f8;
+  --color-border: #dddeeb;
+  --color-ink: #1a1740;
+  --color-ink-muted: #55526f;
+  --color-ink-subtle: #8a879f;
 
-  /* Status */
-  --color-success-50: #e9faf1;
-  --color-success-500: #1fbf75;
-  --color-success-600: #17a364;
-  --color-warning-50: #fff7e6;
-  --color-warning-500: #f5a623;
-  --color-warning-600: #d88c0f;
-  --color-danger-50: #fdeeee;
-  --color-danger-500: #e5484d;
-  --color-danger-600: #c73a3f;
-  --color-info-50: #eaf3ff;
-  --color-info-500: #3d8bfd;
-  --color-info-600: #2f6fd1;
+  /* Status. Success is the school green. */
+  --color-success-50: #e8f2ed;
+  --color-success-500: #26664c;
+  --color-success-600: #1e5440;
+  --color-warning-50: #fdf3e4;
+  --color-warning-500: #c27a14;
+  --color-warning-600: #9a5f0c;
+  --color-danger-50: #fbecea;
+  --color-danger-500: #b42318;
+  --color-danger-600: #912018;
+  --color-info-50: #f0eff8;
+  --color-info-500: #4a40b5;
+  --color-info-600: #3a3196;
 
-  /* Stat-card accents (match the reference dashboard cards) */
-  --color-accent-blue: #4f7dfb;
-  --color-accent-red: #f1626c;
-  --color-accent-purple: #9b6cf6;
-  --color-accent-orange: #f6a84f;
+  /* Stat-card icon accents, kept inside the school palette. */
+  --color-accent-blue: #221b70;
+  --color-accent-purple: #4a40b5;
+  --color-accent-red: #b42318;
+  --color-accent-orange: #c27a14;
 
-  --radius-card: 1rem;
-  --shadow-card: 0 1px 2px rgba(26, 27, 46, 0.04), 0 8px 24px rgba(26, 27, 46, 0.06);
+  /* Chart marks: lighter steps of the two school hues (validated for contrast + CVD). */
+  --color-chart-indigo: #4a40b5;
+  --color-chart-green: #2e8b63;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-card: 0.75rem;
+  --shadow-card: 0 1px 2px rgba(26, 23, 64, 0.05);
+
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-surface: #1a1b2e;
-    --color-surface-muted: #15162440;
-    --color-border: #2c2e45;
-    --color-ink: #f3f3f8;
-    --color-ink-muted: #a7a9bd;
-    --color-ink-subtle: #777a93;
+    --color-surface: #17143d;
+    --color-surface-muted: #1f1b4d;
+    --color-canvas: #110e2e;
+    --color-border: #2f2b60;
+    --color-ink: #f2f1fa;
+    --color-ink-muted: #b3b0cf;
+    --color-ink-subtle: #8580a8;
   }
 }
 
 :root[data-theme="dark"] {
-  --color-surface: #1a1b2e;
-  --color-surface-muted: #15162440;
-  --color-border: #2c2e45;
-  --color-ink: #f3f3f8;
-  --color-ink-muted: #a7a9bd;
-  --color-ink-subtle: #777a93;
+  --color-surface: #17143d;
+  --color-surface-muted: #1f1b4d;
+  --color-canvas: #110e2e;
+  --color-border: #2f2b60;
+  --color-ink: #f2f1fa;
+  --color-ink-muted: #b3b0cf;
+  --color-ink-subtle: #8580a8;
 }
 
 html,
@@ -74,14 +89,20 @@ body,
 }
 
 body {
-  background: var(--color-surface-muted);
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
 
-* {
-  border-color: var(--color-border);
+/* In the base layer so border-color utilities (active tabs, border-transparent, …) can override it. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
 }
 
 ::-webkit-scrollbar {
@@ -91,4 +112,13 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 999px;
+}
+
+@keyframes splash-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
 }

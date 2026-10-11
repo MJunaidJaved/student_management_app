@@ -3,6 +3,7 @@ import { Menu, Search, Bell, LogOut, ChevronDown, User } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useNavigate } from 'react-router-dom'
 import { useApiQuery } from '@/hooks/use-api-query'
+import { SchoolLogo } from '@/components/school-logo'
 
 type NotificationItem = { id: string; status: string }
 
@@ -22,9 +23,13 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4 sm:px-6">
       <div className="flex items-center gap-3">
-        <button onClick={onMenuClick} className="rounded-md p-2 text-ink-muted hover:bg-surface-muted lg:hidden">
+        <button onClick={onMenuClick} className="rounded-md p-2 text-ink-muted hover:bg-surface-muted lg:hidden" aria-label="Open menu">
           <Menu className="size-5" />
         </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <SchoolLogo className="size-8 rounded-full" />
+          <span className="text-sm font-semibold text-school-indigo">Junior Cambridge</span>
+        </div>
         <div className="relative hidden sm:block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" />
           <input

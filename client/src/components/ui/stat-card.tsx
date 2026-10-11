@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils'
 type Accent = 'blue' | 'red' | 'purple' | 'orange' | 'success'
 
 const accentClasses: Record<Accent, string> = {
-  blue: 'bg-accent-blue/10 text-accent-blue',
-  red: 'bg-accent-red/10 text-accent-red',
-  purple: 'bg-accent-purple/10 text-accent-purple',
-  orange: 'bg-accent-orange/10 text-accent-orange',
-  success: 'bg-success-50 text-success-600',
+  blue: 'text-school-indigo',
+  purple: 'text-chart-indigo',
+  red: 'text-danger-500',
+  orange: 'text-warning-500',
+  success: 'text-school-green',
 }
 
 export function StatCard({
@@ -27,16 +27,12 @@ export function StatCard({
 }) {
   return (
     <Card className="p-5">
-      <div className="flex items-center gap-4">
-        <div className={cn('flex size-11 shrink-0 items-center justify-center rounded-xl', accentClasses[accent])}>
-          <Icon className="size-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-ink-muted">{label}</p>
-          <p className="text-xl font-semibold text-ink">{value}</p>
-          {sublabel && <p className="truncate text-xs text-ink-subtle">{sublabel}</p>}
-        </div>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-ink-muted">{label}</p>
+        <Icon className={cn('size-5 shrink-0', accentClasses[accent])} />
       </div>
+      <p className="mt-3 text-3xl font-semibold leading-none tabular-nums text-ink">{value}</p>
+      {sublabel && <p className="mt-2 truncate text-xs text-ink-subtle">{sublabel}</p>}
     </Card>
   )
 }

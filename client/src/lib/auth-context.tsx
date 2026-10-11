@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { apiClient, apiErrorMessage, registerAuthExpiredHandler, setAccessToken } from './api-client'
+import { apiClient, apiErrorMessage, refreshAccessToken, registerAuthExpiredHandler, setAccessToken } from './api-client'
 import type { CurrentUser } from '@/types/api'
 
 type AuthState = {
@@ -31,8 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await apiClient.post<{ data: { accessToken: string } }>('/auth/refresh', {})
-        setAccessToken(res.data.data.accessToken)
+        // Shared, de-duplicated refresh: StrictMode runs this effect twice in dev,
+        // and two parallel refreshes would trip the backend's token-reuse detection.
+        await refreshAccessToken()
         const me = await apiClient.get<{ data: CurrentUser }>('/auth/me')
         if (!cancelled) setState({ status: 'authenticated', me: me.data.data })
       } catch {
