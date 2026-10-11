@@ -76,8 +76,8 @@ export function CreateVoucherDialog({ onClose }: { onClose: () => void }) {
           <Label>Entries (must balance)</Label>
           <div className="space-y-2">
             {lines.map((line, i) => (
-              <div key={i} className="flex items-end gap-2">
-                <Select className="flex-1" value={line.accountHeadId} onChange={(e) => updateLine(i, { accountHeadId: e.target.value })}>
+              <div key={i} className="flex flex-wrap items-end gap-2">
+                <Select className="min-w-[160px] flex-1" value={line.accountHeadId} onChange={(e) => updateLine(i, { accountHeadId: e.target.value })}>
                   <option value="">Account head…</option>
                   {heads.data?.accountHeads.map((h) => (
                     <option key={h.id} value={h.id}>

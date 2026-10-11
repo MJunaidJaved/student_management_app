@@ -157,7 +157,7 @@ export function AllocationsTab() {
                   ))}
               </>
             ) : (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm text-ink">
                     Stop {current.data.allocation.routeStopId} — <Badge tone="success">{current.data.allocation.monthlyFee}/mo</Badge>
@@ -165,7 +165,7 @@ export function AllocationsTab() {
                   <p className="text-xs text-ink-subtle">Since {current.data.allocation.startDate}</p>
                 </div>
                 {hasPermission('transport.allocate') && (
-                  <form onSubmit={endForm.handleSubmit((v) => endAllocation.mutate(v))} className="flex items-end gap-2">
+                  <form onSubmit={endForm.handleSubmit((v) => endAllocation.mutate(v))} className="flex flex-wrap items-end gap-2">
                     <Input type="date" {...endForm.register('endDate', { required: true })} />
                     <Button type="submit" variant="danger" size="sm" loading={endAllocation.isPending}>
                       End Allocation

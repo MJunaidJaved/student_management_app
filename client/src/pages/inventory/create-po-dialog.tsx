@@ -70,8 +70,8 @@ export function CreatePoDialog({ onClose }: { onClose: () => void }) {
           <Label>Items</Label>
           <div className="space-y-2">
             {lines.map((line, i) => (
-              <div key={i} className="flex items-end gap-2">
-                <Select className="flex-1" value={line.itemId} onChange={(e) => updateLine(i, { itemId: e.target.value })}>
+              <div key={i} className="flex flex-wrap items-end gap-2">
+                <Select className="min-w-[160px] flex-1" value={line.itemId} onChange={(e) => updateLine(i, { itemId: e.target.value })}>
                   <option value="">Select item…</option>
                   {items.data?.items.map((it) => (
                     <option key={it.id} value={it.id}>
