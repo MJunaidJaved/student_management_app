@@ -107,15 +107,6 @@ export const PURCHASE_ORDER_STATUSES = ['draft', 'ordered', 'received', 'cancell
 /** `stock_movements.type` */
 export const STOCK_MOVEMENT_TYPES = ['in', 'out', 'adjustment'] as const;
 
-/** `book_issues.borrower_type` */
-export const BORROWER_TYPES = ['student', 'staff'] as const;
-
-/** `book_issues.status` — the workflow in Module 12. */
-export const BOOK_ISSUE_STATUSES = ['issued', 'returned', 'lost'] as const;
-
-/** `library_fines.status` */
-export const LIBRARY_FINE_STATUSES = ['unpaid', 'paid', 'waived'] as const;
-
 export type Gender = (typeof GENDERS)[number];
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
@@ -134,9 +125,6 @@ export type PayrollRunStatus = (typeof PAYROLL_RUN_STATUSES)[number];
 export type PromotionAction = (typeof PROMOTION_ACTIONS)[number];
 export type PurchaseOrderStatus = (typeof PURCHASE_ORDER_STATUSES)[number];
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
-export type BorrowerType = (typeof BORROWER_TYPES)[number];
-export type BookIssueStatus = (typeof BOOK_ISSUE_STATUSES)[number];
-export type LibraryFineStatus = (typeof LIBRARY_FINE_STATUSES)[number];
 
 /**
  * Allowed transitions for the admission workflow (Part 4.6, State pattern).
@@ -210,19 +198,6 @@ export const PURCHASE_ORDER_TRANSITIONS: Readonly<Record<PurchaseOrderStatus, re
   ordered: ['received', 'cancelled'],
   received: [],
   cancelled: [],
-};
-
-/**
- * Allowed transitions for a library book issue (Module 12).
- *
- * Both `returned` and `lost` are terminal: a returned book is re-borrowed
- * through a fresh issue, and a lost one is settled through its fine, never
- * reopened.
- */
-export const BOOK_ISSUE_TRANSITIONS: Readonly<Record<BookIssueStatus, readonly BookIssueStatus[]>> = {
-  issued: ['returned', 'lost'],
-  returned: [],
-  lost: [],
 };
 
 /** True when `to` is reachable from `from`. */

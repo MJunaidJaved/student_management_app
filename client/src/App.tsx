@@ -26,8 +26,6 @@ import { PayrollPage } from '@/pages/payroll/payroll-page'
 import { RunDetailPage } from '@/pages/payroll/run-detail'
 import { InventoryPage } from '@/pages/inventory/inventory-page'
 import { PoDetailPage } from '@/pages/inventory/po-detail'
-import { LibraryPage } from '@/pages/library/library-page'
-import { TransportPage } from '@/pages/transport/transport-page'
 import { SettingsPage } from '@/pages/settings/settings-page'
 import { RolesPage } from '@/pages/roles/roles-page'
 import { AuditLogsPage } from '@/pages/audit/audit-logs-page'
@@ -55,7 +53,7 @@ const queryClient = new QueryClient({
 // than dead links — built out module by module in later passes.
 const builtPaths = new Set([
   '/', '/students', '/staff', '/academic', '/fees', '/attendance', '/leave', '/timetable', '/exams', '/payroll',
-  '/inventory', '/library', '/transport', '/settings', '/roles', '/audit-logs',
+  '/inventory', '/settings', '/roles', '/audit-logs',
   '/substitutions', '/notifications', '/guardians', '/admissions', '/accounting', '/reports',
 ])
 const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter((item) => !builtPaths.has(item.path))
@@ -99,10 +97,6 @@ export default function App() {
 
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/inventory/purchase-orders/:id" element={<PoDetailPage />} />
-
-                  <Route path="/library" element={<LibraryPage />} />
-
-                  <Route path="/transport" element={<TransportPage />} />
 
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/roles" element={<RolesPage />} />

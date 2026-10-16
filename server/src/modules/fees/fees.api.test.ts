@@ -415,13 +415,6 @@ describe('Fees API', () => {
     expect(Number(res.body.data.outstanding)).toBeGreaterThan(0);
   });
 
-  it('reports collections by method for the date range', async () => {
-    const res = await call('/api/v1/reports/fees/collection?from=2026-01-01&to=2026-12-31');
-    expect(res.status).toBe(200);
-    const cash = res.body.data.byMethod.find((m: { method: string }) => m.method === 'cash');
-    expect(cash).toBeDefined();
-  });
-
   it('retrieves a receipt by number, derived from stored records', async () => {
     const aprilInvoice = await call('/api/v1/invoices', { method: 'POST', body: { enrollmentId, billingPeriod: '2026-04', issueDate: '2026-04-01', dueDate: '2026-04-10' } });
     const payment = await call('/api/v1/payments', { method: 'POST', body: { guardianId, amount: '1000.00', method: 'cash', allocations: [{ invoiceId: aprilInvoice.body.data.invoice.id, amount: '1000.00' }] } });
@@ -430,6 +423,14 @@ describe('Fees API', () => {
     expect(receipt.status).toBe(200);
     expect(receipt.body.data.amount).toBe('1000.00');
     expect(receipt.body.data.allocations.length).toBe(1);
+  });
+
+  // Runs after the receipt test: every earlier payment here has been reversed.
+  it('reports collections by method for the date range', async () => {
+    const res = await call('/api/v1/reports/fees/collection?from=2026-01-01&to=2026-12-31');
+    expect(res.status).toBe(200);
+    const cash = res.body.data.byMethod.find((m: { method: string }) => m.method === 'cash');
+    expect(cash).toBeDefined();
   });
 
   it('a request without fees.collect is forbidden', async () => {

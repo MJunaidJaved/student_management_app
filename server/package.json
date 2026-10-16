@@ -23,7 +23,11 @@
     "migrate:mark-baseline": "tsx scripts/migrate.ts --mark-baseline",
     "schema:baseline": "tsx scripts/dump-baseline.ts",
     "schema:verify-baseline": "tsx scripts/verify-baseline.ts",
-    "seed:admin": "tsx scripts/seed-super-admin.ts"
+    "seed:admin": "tsx scripts/seed-super-admin.ts",
+    "db:local": "tsx scripts/local-db.ts",
+    "sync": "tsx scripts/sync.ts",
+    "seed:permissions": "tsx scripts/seed-permissions.ts",
+    "seed:school": "tsx scripts/seed-school.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

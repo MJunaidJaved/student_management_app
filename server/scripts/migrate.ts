@@ -17,6 +17,10 @@
  *   npx tsx scripts/migrate.ts down
  *   npx tsx scripts/migrate.ts status
  *   npx tsx scripts/migrate.ts --mark-baseline
+ *
+ * Add --cloud to any of these to run it against CLOUD_DATABASE_URL (the cloud
+ * mirror) instead. Schema changes are not replicated by the sync worker, so
+ * every migration is applied to both databases.
  */
 
 import * as path from 'node:path';
@@ -28,8 +32,14 @@ const DIR = path.join(__dirname, '..', 'migrations');
 const TABLE = 'pgmigrations';
 const BASELINE = '001_baseline';
 
+const args = process.argv.slice(2);
+const cloud = args.includes('--cloud');
+if (cloud && !config.CLOUD_DATABASE_URL) throw new Error('--cloud given but CLOUD_DATABASE_URL is not set');
+
 /** Migrations alter the schema, so they use the privileged connection. */
-const databaseUrl = config.MIGRATION_DATABASE_URL ?? config.DATABASE_URL;
+const databaseUrl = cloud
+  ? config.CLOUD_DATABASE_URL!
+  : (config.MIGRATION_DATABASE_URL ?? config.DATABASE_URL);
 const ssl = /@(localhost|127\.0\.0\.1)[:/]/.test(databaseUrl)
   ? undefined
   : { rejectUnauthorized: false };
@@ -97,13 +107,68 @@ async function status(): Promise<void> {
   });
 }
 
+/**
+ * 001_baseline.sql was regenerated from the live schema after 014 had been
+ * applied, so it already contains 002–014. On a fresh database, run 001 alone
+ * and then record those as applied; running them again would fail on objects
+ * the baseline already created.
+ */
+const INCLUDED_IN_BASELINE = [
+  '002_refresh_tokens',
+  '003_search_indexes',
+  '004_drop_duplicate_guardian_phone_index',
+  '005_widen_audit_action_check',
+  '006_event_outbox',
+  '007_item_stock_summary',
+  '008_public_refs',
+  '009_staff_separation',
+  '010_substitution_cancellation',
+  '011_exam_payroll_audit',
+  '012_payslip_item_reason',
+  '013_inventory_library_transport_audit',
+  '014_library_fine_reason_and_renewals',
+];
+
+async function buildFreshFromBaseline(): Promise<void> {
+  const applied = await withAdminClient(async (client) => {
+    const t = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [TABLE]);
+    if (!t.rows[0]!.ok) return [] as string[];
+    return (await client.query<{ name: string }>(`SELECT name FROM ${TABLE}`)).rows.map((r) => r.name);
+  });
+  if (applied.length > 1) return;
+
+  if (applied.length === 0) {
+    await runner({
+      databaseUrl: { connectionString: databaseUrl, ...(ssl ? { ssl } : {}) },
+      dir: DIR,
+      migrationsTable: TABLE,
+      direction: 'up',
+      count: 1,
+      singleTransaction: false,
+      verbose: false,
+    });
+  }
+  await withAdminClient(async (client) => {
+    for (const name of INCLUDED_IN_BASELINE) {
+      await client.query(
+        `INSERT INTO ${TABLE} (name, run_on) SELECT $1::varchar, now() WHERE NOT EXISTS (SELECT 1 FROM ${TABLE} WHERE name = $1::varchar)`,
+        [name],
+      );
+    }
+  });
+  console.log(`Fresh build: 001_baseline applied; recorded ${INCLUDED_IN_BASELINE.length} migrations it already contains.`);
+}
+
 async function main(): Promise<void> {
-  const arg = process.argv[2] ?? 'up';
+  const arg = args.find((a) => a !== '--cloud') ?? 'up';
+  console.log(`Target: ${cloud ? 'cloud mirror' : 'local primary'} (${new URL(databaseUrl).hostname})`);
 
   if (arg === '--mark-baseline') return markBaseline();
   if (arg === 'status') return status();
 
   const direction = arg === 'down' ? 'down' : 'up';
+
+  if (direction === 'up') await buildFreshFromBaseline();
 
   const applied = await runner({
     databaseUrl: { connectionString: databaseUrl, ...(ssl ? { ssl } : {}) },

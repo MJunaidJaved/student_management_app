@@ -80,7 +80,6 @@ const UNIQUE_HINTS: ReadonlyArray<readonly [fragment: string, message: string]> 
   ['exam_schedule', 'Marks for this student and paper already exist.'],
   ['billing_period', 'An invoice for this student and billing period already exists.'],
   ['attendance', 'Attendance for this student and date already exists.'],
-  ['uq_one_active_transport', 'This enrollment already has an active transport allocation. End it before creating a new one.'],
 ];
 
 /**
@@ -110,8 +109,6 @@ const TRIGGER_RULES: ReadonlyArray<readonly [test: RegExp, code: string, message
     'A voucher cannot be posted until its debits and credits are equal and non-zero.'],
   [/Academic year is closed/i, 'YEAR_CLOSED',
     'That academic year is closed and is now read-only.'],
-  [/Vehicle capacity \(.*\) exceeded/i, 'VEHICLE_FULL',
-    'The vehicle on this route is already at capacity.'],
   [/Table .* is append-only/i, 'APPEND_ONLY',
     'These records are append-only and cannot be edited or deleted.'],
 ];

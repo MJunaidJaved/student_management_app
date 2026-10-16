@@ -18,6 +18,7 @@ import { readTransaction, transaction, type Actor, type Uow } from '../../core/d
 import { BusinessRuleError, ForbiddenError, NotFoundError, ValidationError } from '../../core/errors';
 import { enforce, type PolicyContext, type SectionPolicy, type StudentPolicy } from '../../core/policy/policy';
 import type { PermissionService } from '../../core/authz/permission-service';
+import type { SettingsService } from '../settings/settings.service';
 import type { SectionRepository } from '../academic/academic.repository';
 import { EnrollmentRepository } from '../students/students.repository';
 import { StaffRepository } from '../staff/staff.repository';
@@ -28,16 +29,17 @@ import {
   type StaffAttendanceRow,
 } from './attendance.repository';
 
-/** Monday = 1 ... Sunday = 7, matching `timetable_entries.day_of_week`. */
-function isSchoolDay(isoDate: string): boolean {
-  const day = new Date(`${isoDate}T00:00:00Z`).getUTCDay(); // 0 = Sunday
-  return day !== 0 && day !== 6;
-}
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
-function assertSchoolDay(date: string): void {
-  if (!isSchoolDay(date)) {
-    throw new BusinessRuleError(`${date} is a weekend; attendance is not taken on non-school days.`, 'NOT_A_SCHOOL_DAY');
-  }
+/**
+ * Weekend days come from the `attendance.weekend_days` setting (a comma list
+ * of day names), so a school on a six-day week — Sunday off, as most schools in
+ * Pakistan are — can take attendance on Saturday.
+ */
+function isSchoolDay(isoDate: string, weekendDays: string): boolean {
+  const day = DAY_NAMES[new Date(`${isoDate}T00:00:00Z`).getUTCDay()]!;
+  const weekend = weekendDays.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean);
+  return !weekend.includes(day);
 }
 
 function todayIso(): string {
@@ -87,11 +89,18 @@ export class AttendanceService {
     private readonly sectionPolicy: SectionPolicy,
     private readonly studentPolicy: StudentPolicy,
     private readonly permissions: PermissionService,
+    private readonly settings: SettingsService,
   ) {}
 
   private async context(uow: Uow, actor: Actor): Promise<PolicyContext> {
     const permissions = actor.userId === null ? new Set<string>() : await this.permissions.forUser(actor.userId);
     return { actor, uow, permissions };
+  }
+
+  private async assertSchoolDay(date: string): Promise<void> {
+    if (!isSchoolDay(date, await this.settings.get('attendance.weekend_days'))) {
+      throw new BusinessRuleError(`${date} is a weekend; attendance is not taken on non-school days.`, 'NOT_A_SCHOOL_DAY');
+    }
   }
 
   /** Past-date edits need the override permission and a written reason (Module 4). */
@@ -153,7 +162,7 @@ export class AttendanceService {
     return transaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
       enforce(await this.sectionPolicy.canMarkAttendance(ctx, input.sectionId), 'Section');
-      assertSchoolDay(input.date);
+      await this.assertSchoolDay(input.date);
       this.assertDateEditable(ctx, input.date, input.reason);
 
       if (input.entries.length === 0) {
@@ -273,7 +282,16 @@ export class AttendanceService {
   }
 
   async getStaffSheet(actor: Actor, date: string, filters: { departmentId?: string | undefined; designationId?: string | undefined }) {
-    return readTransaction(actor, (uow) => this.staffAttendance.sheetForDate(uow, date, filters));
+    return readTransaction(actor, async (uow) =>
+      (await this.staffAttendance.sheetForDate(uow, date, filters)).map((r) => ({
+        staffId: r.staff_id,
+        fullName: r.full_name,
+        employeeNo: r.employee_no,
+        status: r.status,
+        checkIn: r.check_in,
+        checkOut: r.check_out,
+      })),
+    );
   }
 
   async submitStaffSheet(
@@ -286,7 +304,7 @@ export class AttendanceService {
   ): Promise<{ saved: number }> {
     return transaction(actor, async (uow) => {
       const ctx = await this.context(uow, actor);
-      assertSchoolDay(input.date);
+      await this.assertSchoolDay(input.date);
       this.assertDateEditable(ctx, input.date, input.reason);
 
       if (input.entries.length === 0) {

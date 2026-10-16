@@ -22,6 +22,15 @@ import {
 
 const dryRun = process.argv.includes('--dry-run');
 
+const SYSTEM_ROLE_DESCRIPTIONS: Record<string, string> = {
+  [SUPER_ADMIN_ROLE]: 'Full access',
+  Principal: 'Academic and admin oversight',
+  Teacher: 'Classes, attendance, marks',
+  Accountant: 'Fees, payroll, accounts',
+  Guardian: 'Parent portal',
+  Student: 'Student portal',
+};
+
 async function seedPermissions(uow: Uow): Promise<Map<string, string>> {
   /*
    * One statement for all of them. `unnest` turns three parallel arrays into
@@ -53,19 +62,20 @@ async function seedRolePermissions(
     ...DEFAULT_ROLE_PERMISSIONS,
   };
 
+  // On a fresh database the system roles do not exist yet; create them.
+  for (const name of Object.keys(wanted)) {
+    await uow.count(
+      `INSERT INTO roles (name, description, is_system)
+       SELECT $1::text, $2::text, true WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = $1::text)`,
+      [name, SYSTEM_ROLE_DESCRIPTIONS[name] ?? null],
+    );
+  }
+
   const roles = await uow.many<{ id: string; name: string }>(
     `SELECT id, name FROM roles WHERE name = ANY($1)`,
     [Object.keys(wanted)],
   );
   const byName = new Map(roles.map((r) => [r.name, r.id]));
-
-  const missing = Object.keys(wanted).filter((name) => !byName.has(name));
-  if (missing.length) {
-    throw new Error(
-      `These roles are not in the database: ${missing.join(', ')}. ` +
-        'The seven system roles are expected to exist already.',
-    );
-  }
 
   const summary: { role: string; granted: number; removed: number }[] = [];
 

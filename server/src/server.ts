@@ -13,6 +13,7 @@ import { logger } from './core/logging/logger';
 import { closePool } from './core/db/pool';
 import { buildContainer } from './container';
 import { createApp } from './app';
+import { CloudSync } from './core/sync/cloud-sync';
 
 const app = createApp(buildContainer());
 
@@ -22,6 +23,16 @@ const server = app.listen(config.PORT, () => {
     'School Management System API listening',
   );
 });
+
+/*
+ * The local database is the primary; the cloud copy is a mirror kept current
+ * in the background (see core/sync/cloud-sync). Not started under test.
+ */
+const cloudSync =
+  config.CLOUD_DATABASE_URL && config.CLOUD_SYNC_ENABLED && config.NODE_ENV !== 'test'
+    ? new CloudSync(config.CLOUD_DATABASE_URL)
+    : null;
+cloudSync?.start();
 
 let shuttingDown = false;
 
@@ -39,7 +50,9 @@ async function shutdown(signal: string): Promise<void> {
   forceExit.unref();
 
   server.close(() => {
-    void closePool()
+    // Stop the sync worker first: it holds pool connections between batches.
+    void (cloudSync?.stop() ?? Promise.resolve())
+      .then(() => closePool())
       .then(() => {
         logger.info('Shutdown complete');
         process.exit(0);

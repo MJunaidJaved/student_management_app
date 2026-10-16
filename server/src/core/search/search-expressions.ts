@@ -35,12 +35,6 @@ export const GUARDIAN_NAME_EXPR = `lower(full_name)`;
 /** Backing: `staff_name_trgm_idx`, `staff_name_prefix_idx`. */
 export const STAFF_NAME_EXPR = `lower(full_name)`;
 
-/** Backing: `books_title_trgm_idx`, `books_title_prefix_idx`. */
-export const BOOK_TITLE_EXPR = `lower(title)`;
-
-/** Backing: `books_author_trgm_idx`. Author is nullable, hence the coalesce. */
-export const BOOK_AUTHOR_EXPR = `lower(coalesce(author, ''))`;
-
 /**
  * Normalise a name for comparison against the indexed expressions.
  *

@@ -12,12 +12,21 @@
 
 -- Up Migration
 
--- Extensions
+-- Extensions. The `extensions` schema and supabase_vault exist on Supabase; on a
+-- stock Postgres (the local database) the schema is created and vault skipped —
+-- nothing in this schema uses vault.
+CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS "btree_gist" WITH SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS "pg_trgm" WITH SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA extensions;
-CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA vault;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'supabase_vault') THEN
+    CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA vault;
+  END IF;
+END $$;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
 
 -- Human-readable number sequences (admission no, receipt no, and so on)
@@ -1271,7 +1280,8 @@ ALTER TABLE public.payslip_items ADD CONSTRAINT payslip_items_pkey PRIMARY KEY (
 ALTER TABLE public.payslips ADD CONSTRAINT payslips_pkey PRIMARY KEY (id);
 ALTER TABLE public.periods ADD CONSTRAINT periods_pkey PRIMARY KEY (id);
 ALTER TABLE public.permissions ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
-ALTER TABLE public.pgmigrations ADD CONSTRAINT pgmigrations_pkey PRIMARY KEY (id);
+-- node-pg-migrate creates pgmigrations (with its key) before running 001 on a fresh database.
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.pgmigrations'::regclass AND contype = 'p') THEN ALTER TABLE public.pgmigrations ADD CONSTRAINT pgmigrations_pkey PRIMARY KEY (id); END IF; END $$;
 ALTER TABLE public.purchase_order_items ADD CONSTRAINT purchase_order_items_pkey PRIMARY KEY (id);
 ALTER TABLE public.purchase_orders ADD CONSTRAINT purchase_orders_pkey PRIMARY KEY (id);
 ALTER TABLE public.refresh_tokens ADD CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id);

@@ -69,6 +69,14 @@ const schema = z.object({
    * development, where both are the same superuser-ish account anyway.
    */
   MIGRATION_DATABASE_URL: z.string().url().optional(),
+  /**
+   * The cloud mirror. When set, the app still runs against DATABASE_URL (the
+   * local primary) and src/core/sync/cloud-sync.ts replays every committed
+   * change onto this database in the background.
+   */
+  CLOUD_DATABASE_URL: z.string().url().optional(),
+  /** Set to 'false' to keep the mirror configured but stop replicating to it. */
+  CLOUD_SYNC_ENABLED: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
   PGPOOL_MAX: z.coerce.number().int().min(1).max(50).default(8),
   /** Caps a runaway query rather than letting it hold a pooled connection all day. */
   DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),

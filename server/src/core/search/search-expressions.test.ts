@@ -30,8 +30,6 @@
 
 import { afterAll, describe, expect, it } from 'vitest';
 import {
-  BOOK_AUTHOR_EXPR,
-  BOOK_TITLE_EXPR,
   GUARDIAN_NAME_EXPR,
   STAFF_NAME_EXPR,
   STUDENT_NAME_EXPR,
@@ -133,20 +131,6 @@ const cases: Case[] = [
     expression: STAFF_NAME_EXPR,
     using: 'gin ((%EXPR%) gin_trgm_ops)',
     index: 'staff_name_trgm_idx',
-  },
-  {
-    name: 'books_title_trgm_idx',
-    columns: 'title text NOT NULL, author text, deleted_at timestamptz',
-    expression: BOOK_TITLE_EXPR,
-    using: 'gin ((%EXPR%) gin_trgm_ops)',
-    index: 'books_title_trgm_idx',
-  },
-  {
-    name: 'books_author_trgm_idx',
-    columns: 'title text NOT NULL, author text, deleted_at timestamptz',
-    expression: BOOK_AUTHOR_EXPR,
-    using: 'gin ((%EXPR%) gin_trgm_ops)',
-    index: 'books_author_trgm_idx',
   },
 ];
 

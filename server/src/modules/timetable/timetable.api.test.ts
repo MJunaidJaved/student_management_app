@@ -233,7 +233,7 @@ describe('Timetable and substitutions API', () => {
 
     // Nothing was written: section B's timetable is still whatever it was before.
     const after = await call(`/api/v1/timetable/sections/${sectionB}/years/${yearId}`);
-    expect(after.body.data.entries.some((e: { day_of_week: number }) => e.day_of_week === 2)).toBe(false);
+    expect(after.body.data.entries.some((e: { dayOfWeek: number }) => e.dayOfWeek === 2)).toBe(false);
   });
 
   it('bulk-saves a valid section timetable in one transaction', async () => {

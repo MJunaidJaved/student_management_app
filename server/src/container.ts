@@ -109,21 +109,6 @@ import {
   PurchaseOrderItemRepository,
 } from './modules/inventory/inventory.repository';
 import { InventoryService } from './modules/inventory/inventory.service';
-import {
-  BookCategoryRepository,
-  BookRepository,
-  BookIssueRepository,
-  LibraryFineRepository,
-} from './modules/library/library.repository';
-import { LibraryService } from './modules/library/library.service';
-import {
-  DriverRepository,
-  VehicleRepository,
-  RouteRepository,
-  RouteStopRepository,
-  StudentTransportRepository,
-} from './modules/transport/transport.repository';
-import { TransportService } from './modules/transport/transport.service';
 
 export type Container = {
   cache: CacheStore;
@@ -190,15 +175,6 @@ export type Container = {
     purchaseOrders: PurchaseOrderRepository;
     purchaseOrderItems: PurchaseOrderItemRepository;
     stockMovements: StockMovementRepository;
-    bookCategories: BookCategoryRepository;
-    books: BookRepository;
-    bookIssues: BookIssueRepository;
-    libraryFines: LibraryFineRepository;
-    drivers: DriverRepository;
-    vehicles: VehicleRepository;
-    transportRoutes: RouteRepository;
-    routeStops: RouteStopRepository;
-    studentTransport: StudentTransportRepository;
     reports: ReportsRepository;
   };
   services: {
@@ -219,8 +195,6 @@ export type Container = {
     payroll: PayrollService;
     accounting: AccountingService;
     inventory: InventoryService;
-    library: LibraryService;
-    transport: TransportService;
     reports: ReportsService;
   };
 };
@@ -322,16 +296,6 @@ export function buildContainer(options: ContainerOptions = {}): Container {
   const purchaseOrdersRepo = new PurchaseOrderRepository();
   const purchaseOrderItemsRepo = new PurchaseOrderItemRepository();
 
-  const bookCategoriesRepo = new BookCategoryRepository();
-  const booksRepo = new BookRepository();
-  const bookIssuesRepo = new BookIssueRepository();
-  const libraryFinesRepo = new LibraryFineRepository();
-
-  const driversRepo = new DriverRepository();
-  const vehiclesRepo = new VehicleRepository();
-  const transportRoutesRepo = new RouteRepository();
-  const routeStopsRepo = new RouteStopRepository();
-  const studentTransportRepo = new StudentTransportRepository();
 
   const studentPolicy = new StudentPolicy(cache, permissions);
   const sectionPolicy = new SectionPolicy(cache, permissions);
@@ -406,15 +370,6 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       purchaseOrders: purchaseOrdersRepo,
       purchaseOrderItems: purchaseOrderItemsRepo,
       stockMovements: stockMovementsRepo,
-      bookCategories: bookCategoriesRepo,
-      books: booksRepo,
-      bookIssues: bookIssuesRepo,
-      libraryFines: libraryFinesRepo,
-      drivers: driversRepo,
-      vehicles: vehiclesRepo,
-      transportRoutes: transportRoutesRepo,
-      routeStops: routeStopsRepo,
-      studentTransport: studentTransportRepo,
       reports: reportsRepo,
     },
     services: {
@@ -452,6 +407,7 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         sectionPolicy,
         studentPolicy,
         permissions,
+        settingsService,
       ),
       leave: new LeaveService(
         leaveTypesRepo,
@@ -508,8 +464,6 @@ export function buildContainer(options: ContainerOptions = {}): Container {
       inventory: new InventoryService(
         itemCategoriesRepo, itemsRepo, itemStockRepo, stockMovementsRepo, suppliersRepo, purchaseOrdersRepo, purchaseOrderItemsRepo, settingsService,
       ),
-      library: new LibraryService(bookCategoriesRepo, booksRepo, bookIssuesRepo, libraryFinesRepo, paymentsRepo, settingsService, permissions),
-      transport: new TransportService(driversRepo, vehiclesRepo, transportRoutesRepo, routeStopsRepo, studentTransportRepo, enrollmentsRepo, permissions),
       reports: reportsService,
     },
   };

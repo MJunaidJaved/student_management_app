@@ -254,7 +254,7 @@ export class StaffService {
             limit: options.limit,
             prefixOnly: options.typeahead ?? false,
           });
-          return { kind, staff: rows };
+          return { kind, staff: rows.map(minimal) };
         }
       }
     });
@@ -395,8 +395,9 @@ async function assertDesignationExists(
   await designations.getById(uow, id);
 }
 
+/** The search-result shape every path returns, in the API's camelCase like every other view. */
 function minimal(
-  row: StaffRow,
-): { id: string; employee_no: string; full_name: string; status: string } {
-  return { id: row.id, employee_no: row.employee_no, full_name: row.full_name, status: row.status };
+  row: Pick<StaffRow, 'id' | 'employee_no' | 'full_name' | 'status'> & { designation_id?: string | null },
+): { id: string; employeeNo: string; fullName: string; status: string; designationId: string | null } {
+  return { id: row.id, employeeNo: row.employee_no, fullName: row.full_name, status: row.status, designationId: row.designation_id ?? null };
 }

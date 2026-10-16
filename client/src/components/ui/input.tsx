@@ -6,8 +6,8 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink placeholder:text-ink-subtle',
-        'focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400',
+        'h-10 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm text-ink placeholder:text-ink-subtle shadow-[0_1px_2px_rgba(21,23,57,0.04)] transition-colors',
+        'focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400',
         'disabled:opacity-50 disabled:bg-surface-muted',
         className,
       )}
@@ -22,8 +22,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     <select
       ref={ref}
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink',
-        'focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400',
+        'h-10 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm text-ink shadow-[0_1px_2px_rgba(21,23,57,0.04)] transition-colors',
+        'focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400',
         'disabled:opacity-50 disabled:bg-surface-muted',
         className,
       )}
@@ -36,7 +36,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 Select.displayName = 'Select'
 
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn('mb-1.5 block text-sm font-medium text-ink', className)} {...props} />
+  return <label className={cn('mb-1.5 block text-[13px] font-semibold text-ink', className)} {...props} />
 }
 
 export function FieldError({ children }: { children?: string }) {

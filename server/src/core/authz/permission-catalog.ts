@@ -253,30 +253,6 @@ const inventory = define('inventory', [
   ['read_reports', 'View stock-on-hand, valuation and purchasing reports'],
 ]);
 
-/* ---------------- Module 12: library ---------------- */
-
-const library = define('library', [
-  ['read', 'View books, categories and issue history'],
-  ['read_own', 'View your own currently issued books and fines'],
-  ['manage_catalog', 'Create and edit book categories and books'],
-  ['issue', 'Issue a book to a borrower'],
-  ['return', 'Mark a book returned'],
-  ['renew', 'Renew an issued book'],
-  ['mark_lost', 'Mark a book lost and create its replacement fine', true],
-  ['manage_fines', 'Waive a library fine', true],
-  ['read_reports', 'View overdue, most-borrowed and borrower-history reports'],
-]);
-
-/* ---------------- Module 13: transport ---------------- */
-
-const transport = define('transport', [
-  ['read', 'View drivers, vehicles, routes, stops and allocations'],
-  ['read_own', 'View your own or your children’s transport allocation'],
-  ['manage_fleet', 'Create and edit drivers, vehicles, routes and stops'],
-  ['allocate', 'Allocate or end a student’s transport allocation', true],
-  ['read_compliance', 'View expiring license, insurance and fitness reports'],
-]);
-
 /** Every permission in the system. */
 export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...users, ...roles, ...permissions, ...audit, ...settings,
@@ -290,8 +266,6 @@ export const PERMISSION_CATALOG: readonly PermissionDefinition[] = [
   ...staff,
   ...payroll,
   ...inventory,
-  ...library,
-  ...transport,
 ];
 
 /** Fast membership checks, and the guard behind `requirePermission`. */

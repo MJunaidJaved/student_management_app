@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Boxes, BookOpen, Bus, Landmark } from 'lucide-react'
+import { Boxes, Landmark } from 'lucide-react'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -58,8 +58,6 @@ export function ReportsPage() {
 
   const quickLinks = [
     { label: 'Low Stock (Inventory)', icon: Boxes, path: '/inventory', permission: 'inventory.read_reports' },
-    { label: 'Overdue Books (Library)', icon: BookOpen, path: '/library', permission: 'library.read_reports' },
-    { label: 'Fleet Compliance (Transport)', icon: Bus, path: '/transport', permission: 'transport.read_compliance' },
     { label: 'Trial Balance (Accounting)', icon: Landmark, path: '/accounting', permission: 'accounting.read' },
   ].filter((l) => hasPermission(l.permission))
 

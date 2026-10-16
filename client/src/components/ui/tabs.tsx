@@ -15,14 +15,14 @@ export function Tabs<T extends string>({
   className?: string
 }) {
   return (
-    <div className={cn('mb-4 flex gap-1 border-b border-border', className)}>
+    <div className={cn('mb-5 flex gap-1 overflow-x-auto border-b border-border', className)}>
       {tabs.map((t) => (
         <button
           key={t.key}
           onClick={() => onChange(t.key)}
           className={cn(
-            'border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-            active === t.key ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-muted hover:text-ink',
+            '-mb-px whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-semibold transition-colors',
+            active === t.key ? 'border-brand-500 text-brand-500' : 'border-transparent text-ink-subtle hover:border-border-strong hover:text-ink',
           )}
         >
           {t.label}

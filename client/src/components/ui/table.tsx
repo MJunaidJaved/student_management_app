@@ -10,7 +10,7 @@ export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>)
 }
 
 export function Thead({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('border-b border-border', className)} {...props} />
+  return <thead className={cn('border-b border-border bg-surface-muted', className)} {...props} />
 }
 
 export function Tbody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -18,13 +18,13 @@ export function Tbody({ className, ...props }: HTMLAttributes<HTMLTableSectionEl
 }
 
 export function Tr({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('hover:bg-surface-muted/60 transition-colors', className)} {...props} />
+  return <tr className={cn('hover:bg-brand-50/50 transition-colors', className)} {...props} />
 }
 
 export function Th({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={cn('px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-subtle', className)}
+      className={cn('px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle whitespace-nowrap', className)}
       {...props}
     />
   )

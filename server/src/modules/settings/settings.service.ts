@@ -40,7 +40,6 @@ export const SETTING_DEFAULTS = {
   'school.receipt_footer': { group: 'school', value: '' },
 
   /* Decision 7: business rules, changeable without code. */
-  'transport.full_month_cutoff_day': { group: 'fees', value: '15' },
   'payroll.absence_divisor': { group: 'payroll', value: '30' },
   'fees.fine_cap_percent_of_subtotal': { group: 'fees', value: '50' },
   'inventory.allow_partial_po_receiving': { group: 'inventory', value: 'true' },
@@ -54,14 +53,6 @@ export const SETTING_DEFAULTS = {
   'attendance.weekend_days': { group: 'attendance', value: 'saturday,sunday' },
   'attendance.past_edit_window_days': { group: 'attendance', value: '7' },
   'attendance.defaulter_threshold_percent': { group: 'attendance', value: '75' },
-
-  /* Library. */
-  'library.loan_days': { group: 'library', value: '14' },
-  'library.max_books_student': { group: 'library', value: '2' },
-  'library.max_books_staff': { group: 'library', value: '5' },
-  'library.fine_per_day': { group: 'library', value: '5.00' },
-  'library.fine_grace_days': { group: 'library', value: '0' },
-  'library.max_renewals': { group: 'library', value: '2' },
 
   /* Notifications. */
   'notifications.fee_reminder_interval_days': { group: 'notifications', value: '7' },

@@ -1,85 +1,104 @@
 @import "tailwindcss";
 
 @theme {
-  /* School palette (The Junior Cambridge School): indigo + laurel green. */
-  --color-school-indigo: #221b70;
-  --color-school-green: #26664c;
-  --color-mist: #dddeeb;
+  /*
+   * The Junior Cambridge School palette, sampled from the crest:
+   * the indigo ring, the laurel green, and the sky-blue book.
+   */
+  --color-school-indigo: #1c1a78;
+  --color-school-green: #1a6a44;
+  --color-school-sky: #03aef3;
+  --color-mist: #e3e6ef;
   /* Light tints of the school green, for use on the dark indigo surfaces only. */
-  --color-laurel: #7fbf9f;
-  --color-laurel-soft: #a9d6bf;
-  --color-canvas: #fbfafa;
+  --color-laurel: #7fc6a0;
+  --color-laurel-soft: #b5dec8;
+  --color-canvas: #f4f6fb;
 
-  /* Brand = school indigo. 500 is the exact school colour. */
-  --color-brand-50: #f0eff8;
-  --color-brand-100: #e2e1f1;
-  --color-brand-200: #c4c1e3;
-  --color-brand-300: #9590cc;
-  --color-brand-400: #5c55ae;
-  --color-brand-500: #221b70;
-  --color-brand-600: #1c165e;
-  --color-brand-700: #16114b;
-  --color-brand-800: #100c38;
-  --color-brand-900: #0b0826;
+  /* Brand = crest indigo. 500 is the exact school colour. */
+  --color-brand-50: #f2f2fb;
+  --color-brand-100: #e4e4f6;
+  --color-brand-200: #c8c7ec;
+  --color-brand-300: #9c9ad6;
+  --color-brand-400: #5f5cb8;
+  --color-brand-500: #1c1a78;
+  --color-brand-600: #171563;
+  --color-brand-700: #12104f;
+  --color-brand-800: #0d0c3a;
+  --color-brand-900: #080727;
 
-  /* Surface / neutral */
+  /* Sky = the book in the crest; used for highlights, links and focus. */
+  --color-sky-50: #e9f7fe;
+  --color-sky-100: #d0eefd;
+  --color-sky-500: #079bd8;
+  --color-sky-600: #067fb2;
+
+  /* Surface / neutral: cool greys with a trace of the indigo. */
   --color-surface: #ffffff;
-  --color-surface-muted: #f3f3f8;
-  --color-border: #dddeeb;
-  --color-ink: #1a1740;
-  --color-ink-muted: #55526f;
-  --color-ink-subtle: #8a879f;
+  --color-surface-muted: #f6f7fb;
+  --color-border: #e3e6ef;
+  --color-border-strong: #cfd4e2;
+  --color-ink: #151739;
+  --color-ink-muted: #51556f;
+  --color-ink-subtle: #868aa3;
 
   /* Status. Success is the school green. */
-  --color-success-50: #e8f2ed;
-  --color-success-500: #26664c;
-  --color-success-600: #1e5440;
-  --color-warning-50: #fdf3e4;
+  --color-success-50: #e9f4ee;
+  --color-success-500: #1d7a4f;
+  --color-success-600: #17633f;
+  --color-warning-50: #fdf4e6;
   --color-warning-500: #c27a14;
-  --color-warning-600: #9a5f0c;
-  --color-danger-50: #fbecea;
-  --color-danger-500: #b42318;
-  --color-danger-600: #912018;
-  --color-info-50: #f0eff8;
-  --color-info-500: #4a40b5;
-  --color-info-600: #3a3196;
+  --color-warning-600: #93590b;
+  --color-danger-50: #fcefee;
+  --color-danger-500: #c0362c;
+  --color-danger-600: #9b2a21;
+  --color-info-50: #e9f7fe;
+  --color-info-500: #079bd8;
+  --color-info-600: #067fb2;
 
   /* Stat-card icon accents, kept inside the school palette. */
-  --color-accent-blue: #221b70;
-  --color-accent-purple: #4a40b5;
-  --color-accent-red: #b42318;
+  --color-accent-blue: #1c1a78;
+  --color-accent-purple: #079bd8;
+  --color-accent-red: #c0362c;
   --color-accent-orange: #c27a14;
 
-  /* Chart marks: lighter steps of the two school hues (validated for contrast + CVD). */
+  /* Chart marks: lighter steps of the school hues (validated for contrast + CVD). */
   --color-chart-indigo: #4a40b5;
   --color-chart-green: #2e8b63;
+  --color-chart-sky: #079bd8;
 
-  --radius-card: 0.75rem;
-  --shadow-card: 0 1px 2px rgba(26, 23, 64, 0.05);
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgba(21, 23, 57, 0.04), 0 1px 3px rgba(21, 23, 57, 0.05);
+  --shadow-raised: 0 4px 12px -2px rgba(21, 23, 57, 0.08), 0 2px 4px -2px rgba(21, 23, 57, 0.05);
 
   --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-surface: #17143d;
-    --color-surface-muted: #1f1b4d;
-    --color-canvas: #110e2e;
-    --color-border: #2f2b60;
-    --color-ink: #f2f1fa;
-    --color-ink-muted: #b3b0cf;
-    --color-ink-subtle: #8580a8;
+    --color-surface: #15163a;
+    --color-surface-muted: #1c1d47;
+    --color-canvas: #0f1030;
+    --color-border: #2a2c5c;
+    --color-border-strong: #3a3d72;
+    --color-ink: #f1f2fb;
+    --color-ink-muted: #b4b6d2;
+    --color-ink-subtle: #8487aa;
+    --color-brand-50: #22235a;
+    --color-brand-100: #2b2d6b;
   }
 }
 
 :root[data-theme="dark"] {
-  --color-surface: #17143d;
-  --color-surface-muted: #1f1b4d;
-  --color-canvas: #110e2e;
-  --color-border: #2f2b60;
-  --color-ink: #f2f1fa;
-  --color-ink-muted: #b3b0cf;
-  --color-ink-subtle: #8580a8;
+  --color-surface: #15163a;
+  --color-surface-muted: #1c1d47;
+  --color-canvas: #0f1030;
+  --color-border: #2a2c5c;
+  --color-border-strong: #3a3d72;
+  --color-ink: #f1f2fb;
+  --color-ink-muted: #b4b6d2;
+  --color-ink-subtle: #8487aa;
+  --color-brand-50: #22235a;
+  --color-brand-100: #2b2d6b;
 }
 
 html,
@@ -121,4 +140,9 @@ body {
   to {
     transform: translateX(250%);
   }
+}
+
+/* The crest ribbon: indigo ring, sky book, laurel green. */
+.brand-ribbon {
+  background: linear-gradient(90deg, var(--color-school-indigo) 0%, var(--color-school-indigo) 45%, var(--color-school-sky) 45%, var(--color-school-sky) 72%, var(--color-school-green) 72%);
 }

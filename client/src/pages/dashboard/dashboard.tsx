@@ -1,5 +1,7 @@
-import { Users, UserCog, Wallet, AlertCircle } from 'lucide-react'
-import { PageHeader } from '@/components/ui/page-header'
+import { Link } from 'react-router-dom'
+import { Users, UserCog, Wallet, AlertCircle, CalendarCheck, Receipt, UserPlus } from 'lucide-react'
+import { SchoolLogo } from '@/components/school-logo'
+import { SCHOOL } from '@/lib/school'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PageLoading, EmptyState } from '@/components/ui/feedback'
@@ -67,12 +69,42 @@ export function DashboardPage() {
   const monthLabel = now.toLocaleDateString('en-GB', { month: 'long' })
   const anyCardVisible = canStudents || canStaff || canFees || canOutstanding
 
+  const quickActions = [
+    { label: 'Mark attendance', to: '/attendance', icon: CalendarCheck, allowed: hasPermission('attendance.mark') },
+    { label: 'Collect fee', to: '/fees', icon: Receipt, allowed: hasPermission('fees.collect') },
+    { label: 'Add student', to: '/students', icon: UserPlus, allowed: hasPermission('students.create') },
+  ].filter((a) => a.allowed)
+
   return (
     <div>
-      <PageHeader
-        title={`${greeting(now.getHours())}, ${me?.user.username ?? ''}`}
-        description={now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-      />
+      <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 px-6 py-6 text-white shadow-[var(--shadow-raised)] sm:px-8 sm:py-7">
+        <div className="pointer-events-none absolute -right-10 -top-10 size-64 rounded-full bg-white opacity-[0.06]" />
+        <div className="pointer-events-none absolute -right-2 top-1/2 hidden size-44 -translate-y-1/2 overflow-hidden rounded-full opacity-[0.14] md:block">
+          <SchoolLogo className="size-full grayscale" />
+        </div>
+        <div className="relative max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-100/80">{SCHOOL.name}</p>
+          <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight">
+            {greeting(now.getHours())}, {me?.user.username ?? ''}
+          </h1>
+          <p className="mt-1 text-sm text-brand-200">
+            {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {quickActions.map((a) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-white/10 px-3.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/20"
+              >
+                <a.icon className="size-4 text-sky-100" />
+                {a.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="brand-ribbon absolute inset-x-0 bottom-0 h-1" />
+      </section>
 
       {!anyCardVisible && (
         <EmptyState
@@ -85,7 +117,7 @@ export function DashboardPage() {
         {canStudents && (
           <StatCard label="Active students" value={students.isLoading ? '…' : (totalStudents ?? 0)} icon={Users} accent="blue" />
         )}
-        {canStaff && <StatCard label="Active staff" value={staff.isLoading ? '…' : (totalStaff ?? 0)} icon={UserCog} accent="purple" />}
+        {canStaff && <StatCard label="Active staff" value={staff.isLoading ? '…' : (totalStaff ?? 0)} icon={UserCog} accent="sky" />}
         {canFees && (
           <StatCard
             label={`Collected in ${monthLabel}`}
@@ -136,7 +168,7 @@ export function DashboardPage() {
                         contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 12 }}
                         formatter={(v) => [money(Number(v)), 'Collected']}
                       />
-                      <Bar dataKey="total" fill="var(--color-chart-green)" radius={[4, 4, 0, 0]} maxBarSize={44} />
+                      <Bar dataKey="total" fill="var(--color-chart-green)" radius={[6, 6, 0, 0]} maxBarSize={56} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}

@@ -43,8 +43,6 @@ import { examsRoutes } from './modules/exams/exams.routes';
 import { promotionsRoutes } from './modules/promotions/promotions.routes';
 import { payrollRoutes } from './modules/payroll/payroll.routes';
 import { inventoryRoutes } from './modules/inventory/inventory.routes';
-import { libraryRoutes } from './modules/library/library.routes';
-import { transportRoutes } from './modules/transport/transport.routes';
 import { reportsRoutes } from './modules/reports/reports.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
@@ -143,8 +141,6 @@ export function createApp(container: Container): Express {
   mount('', promotionsRoutes(container.services.promotions));
   mount('', payrollRoutes(container.services.payroll));
   mount('', inventoryRoutes(container.services.inventory));
-  mount('', libraryRoutes(container.services.library));
-  mount('', transportRoutes(container.services.transport));
   mount('', reportsRoutes(container.services.reports));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.

@@ -208,9 +208,9 @@ describe('system role protection', () => {
 
   it('refuses to delete a system role', async () => {
     const list = await call('/api/v1/roles', { token: adminToken });
-    const librarian = list.body.data.roles.find((r: { name: string }) => r.name === 'Librarian');
+    const accountant = list.body.data.roles.find((r: { name: string }) => r.name === 'Accountant');
 
-    const res = await call(`/api/v1/roles/${librarian.id}`, {
+    const res = await call(`/api/v1/roles/${accountant.id}`, {
       method: 'DELETE',
       token: adminToken,
     });

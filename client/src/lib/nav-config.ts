@@ -14,8 +14,6 @@ import {
   FileSpreadsheet,
   Banknote,
   Boxes,
-  BookOpen,
-  Bus,
   ShieldCheck,
   Settings,
   History,
@@ -78,8 +76,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Support Systems',
     items: [
       { label: 'Inventory', path: '/inventory', icon: Boxes, permissions: ['inventory.read'] },
-      { label: 'Library', path: '/library', icon: BookOpen, permissions: ['library.read', 'library.read_own'] },
-      { label: 'Transport', path: '/transport', icon: Bus, permissions: ['transport.read', 'transport.read_own'] },
     ],
   },
   {

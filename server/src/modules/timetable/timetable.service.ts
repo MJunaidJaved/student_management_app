@@ -51,6 +51,28 @@ function toEntryView(row: TimetableEntryRow): TimetableEntryView {
   };
 }
 
+/** A grid cell: the entry plus the names a timetable view displays. */
+export type TimetableGridEntryView = TimetableEntryView & {
+  subjectName: string;
+  periodName: string;
+  staffName?: string;
+  sectionName?: string;
+  roomName?: string | null;
+};
+
+function toGridEntryView(
+  row: TimetableEntryRow & { subject_name: string; period_name: string; staff_name?: string; section_name?: string; room_name?: string | null },
+): TimetableGridEntryView {
+  return {
+    ...toEntryView(row),
+    subjectName: row.subject_name,
+    periodName: row.period_name,
+    ...(row.staff_name !== undefined ? { staffName: row.staff_name } : {}),
+    ...(row.section_name !== undefined ? { sectionName: row.section_name } : {}),
+    ...(row.room_name !== undefined ? { roomName: row.room_name } : {}),
+  };
+}
+
 export type SubstitutionView = {
   id: string;
   timetableEntryId: string;
@@ -307,7 +329,7 @@ export class TimetableService {
         );
         if (!assigned) throw new NotFoundError('Section');
       }
-      return this.entries.listForSection(uow, sectionId, yearId);
+      return (await this.entries.listForSection(uow, sectionId, yearId)).map(toGridEntryView);
     });
   }
 
@@ -317,12 +339,12 @@ export class TimetableService {
       if (actor.userType !== 'admin' && !permissions.has('timetable.manage') && String(actor.staffId) !== staffId) {
         throw new NotFoundError('Staff');
       }
-      return this.entries.listForStaff(uow, staffId, yearId);
+      return (await this.entries.listForStaff(uow, staffId, yearId)).map(toGridEntryView);
     });
   }
 
   async getForRoom(actor: Actor, roomId: string, yearId: string) {
-    return readTransaction(actor, (uow) => this.entries.listForRoom(uow, roomId, yearId));
+    return readTransaction(actor, async (uow) => (await this.entries.listForRoom(uow, roomId, yearId)).map(toGridEntryView));
   }
 
   /* ---------------- substitutions ---------------- */
