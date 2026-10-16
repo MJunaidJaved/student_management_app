@@ -44,6 +44,7 @@ import { promotionsRoutes } from './modules/promotions/promotions.routes';
 import { payrollRoutes } from './modules/payroll/payroll.routes';
 import { inventoryRoutes } from './modules/inventory/inventory.routes';
 import { reportsRoutes } from './modules/reports/reports.routes';
+import { adminRoutes } from './modules/admin/admin.routes';
 import { transaction, SYSTEM_ACTOR } from './core/db/uow';
 import type { Container } from './container';
 
@@ -142,6 +143,7 @@ export function createApp(container: Container): Express {
   mount('', payrollRoutes(container.services.payroll));
   mount('', inventoryRoutes(container.services.inventory));
   mount('', reportsRoutes(container.services.reports));
+  mount('', adminRoutes(container.services.admin));
 
   // A tiny authenticated endpoint that proves the whole chain works end to end.
   app.get(`${prefix}/ping`, middleware.rateLimit('global'), (_req, res) => {

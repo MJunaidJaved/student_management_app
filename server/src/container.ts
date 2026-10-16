@@ -1,5 +1,6 @@
 ﻿import { ReportsRepository } from './modules/reports/reports.repository';
 import { ReportsService } from './modules/reports/reports.service';
+import { AdminService } from './modules/admin/admin.service';
 /**
  * The composition root (Part 4.4).
  *
@@ -196,6 +197,7 @@ export type Container = {
     accounting: AccountingService;
     inventory: InventoryService;
     reports: ReportsService;
+    admin: AdminService;
   };
 };
 
@@ -465,6 +467,7 @@ export function buildContainer(options: ContainerOptions = {}): Container {
         itemCategoriesRepo, itemsRepo, itemStockRepo, stockMovementsRepo, suppliersRepo, purchaseOrdersRepo, purchaseOrderItemsRepo, settingsService,
       ),
       reports: reportsService,
+      admin: new AdminService(),
     },
   };
 }

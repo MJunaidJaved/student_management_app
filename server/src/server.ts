@@ -13,7 +13,7 @@ import { logger } from './core/logging/logger';
 import { closePool } from './core/db/pool';
 import { buildContainer } from './container';
 import { createApp } from './app';
-import { CloudSync } from './core/sync/cloud-sync';
+import { CloudSync, setActiveCloudSync } from './core/sync/cloud-sync';
 
 const app = createApp(buildContainer());
 
@@ -33,6 +33,7 @@ const cloudSync =
     ? new CloudSync(config.CLOUD_DATABASE_URL)
     : null;
 cloudSync?.start();
+setActiveCloudSync(cloudSync);
 
 let shuttingDown = false;
 

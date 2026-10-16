@@ -363,3 +363,15 @@ export async function pendingChanges(): Promise<number> {
   const res = await withClient((l) => l.query<{ n: number }>(`SELECT count(*)::int AS n FROM sync_changelog`));
   return res.rows[0]!.n;
 }
+
+/*
+ * The worker the running server started, if any, so the admin console can
+ * report on it. Set once from server.ts.
+ */
+let active: CloudSync | null = null;
+export function setActiveCloudSync(sync: CloudSync | null): void {
+  active = sync;
+}
+export function activeCloudSync(): CloudSync | null {
+  return active;
+}
