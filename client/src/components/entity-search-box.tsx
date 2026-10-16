@@ -48,7 +48,7 @@ export function EntitySearchBox<TItem extends { id: string }>({
   }, [q])
 
   return (
-    <div className="relative min-w-[260px] flex-1">
+    <div className="relative min-w-[220px] flex-1 text-ink">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" />
       <Input
         placeholder={placeholder}
@@ -61,7 +61,7 @@ export function EntitySearchBox<TItem extends { id: string }>({
       {loading && <Spinner className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />}
 
       {open && results && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-surface py-1 shadow-[var(--shadow-card)]">
+        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-surface py-1 shadow-[var(--shadow-raised)]">
           {results.length === 0 ? (
             <p className="px-3 py-2 text-sm text-ink-muted">No results</p>
           ) : (

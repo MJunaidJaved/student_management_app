@@ -6,7 +6,7 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { SplashGate } from '@/components/splash-screen'
 import { AppLayout } from '@/components/layout/app-layout'
 import { LoginPage } from '@/pages/auth/login'
-import { DashboardPage } from '@/pages/dashboard/dashboard'
+import { HomePage } from '@/pages/home/home-page'
 import { ComingSoonPage } from '@/pages/coming-soon'
 import { StudentsListPage } from '@/pages/students/students-list'
 import { StudentCreatePage } from '@/pages/students/student-create'
@@ -56,7 +56,7 @@ const builtPaths = new Set([
   '/inventory', '/settings', '/roles', '/audit-logs',
   '/substitutions', '/notifications', '/guardians', '/admissions', '/accounting', '/reports',
 ])
-const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter((item) => !builtPaths.has(item.path))
+const placeholderRoutes = NAV_GROUPS.flatMap((g) => g.items).filter((item) => !builtPaths.has(item.path) && !item.path.includes('/new'))
 
 export default function App() {
   return (
@@ -70,7 +70,7 @@ export default function App() {
 
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/" element={<HomePage />} />
 
                   <Route path="/students" element={<StudentsListPage />} />
                   <Route path="/students/new" element={<StudentCreatePage />} />
