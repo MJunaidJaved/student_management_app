@@ -1,44 +1,41 @@
 import type { ComponentType } from 'react'
-import { Card } from './card'
 import { cn } from '@/lib/utils'
 
 type Accent = 'blue' | 'red' | 'purple' | 'orange' | 'success' | 'sky'
 
-/** Icon chips in the crest's colours: indigo, sky, laurel, plus the status hues. */
-const chipClasses: Record<Accent, string> = {
-  blue: 'bg-brand-50 text-brand-500',
-  purple: 'bg-sky-50 text-sky-600',
-  sky: 'bg-sky-50 text-sky-600',
-  red: 'bg-danger-50 text-danger-500',
-  orange: 'bg-warning-50 text-warning-600',
-  success: 'bg-success-50 text-success-600',
+const iconTone: Record<Accent, string> = {
+  blue: 'text-teal',
+  purple: 'text-sky-600',
+  sky: 'text-sky-600',
+  red: 'text-coral',
+  orange: 'text-warning-600',
+  success: 'text-success-500',
 }
 
+/** A quiet number tile: muted block, large figure, small label. */
 export function StatCard({
   label,
   value,
   icon: Icon,
   accent = 'blue',
   sublabel,
+  className,
 }: {
   label: string
   value: string | number
-  icon: ComponentType<{ className?: string }>
+  icon?: ComponentType<{ className?: string }>
   accent?: Accent
   sublabel?: string
+  className?: string
 }) {
   return (
-    <Card className="p-5">
+    <div className={cn('rounded-card bg-surface-muted p-5', className)}>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[13px] font-semibold text-ink-muted">{label}</p>
-          <p className="mt-2 text-[28px] font-bold leading-none tracking-tight tabular-nums text-ink">{value}</p>
-        </div>
-        <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', chipClasses[accent])}>
-          <Icon className="size-5" />
-        </div>
+        <p className="text-[26px] font-medium leading-none tracking-tight tabular-nums text-ink">{value}</p>
+        {Icon && <Icon className={cn('size-4 shrink-0', iconTone[accent])} />}
       </div>
-      {sublabel && <p className="mt-3 truncate text-xs text-ink-subtle">{sublabel}</p>}
-    </Card>
+      <p className="mt-3 text-[13px] text-ink-muted">{label}</p>
+      {sublabel && <p className="mt-0.5 truncate text-xs text-ink-subtle">{sublabel}</p>}
+    </div>
   )
 }

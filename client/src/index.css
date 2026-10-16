@@ -1,104 +1,87 @@
 @import "tailwindcss";
 
+/*
+ * Admin console palette:
+ *   White      #FFFFFF  surfaces
+ *   Teal       #344C4B  primary: buttons, active states, headings
+ *   Turquoise  #8CBEBF  secondary: charts, progress, info
+ *   Coral      #E5765C  accent: alerts, overdue, attention
+ *   Spring     #DFE0C3  soft highlight surfaces
+ * Minimal by design: hairline borders, no shadows, one accent at a time.
+ */
 @theme {
-  /*
-   * The Junior Cambridge School palette, sampled from the crest:
-   * the indigo ring, the laurel green, and the sky-blue book.
-   */
-  --color-school-indigo: #1c1a78;
-  --color-school-green: #1a6a44;
-  --color-school-sky: #03aef3;
-  --color-mist: #e3e6ef;
-  /* Light tints of the school green, for use on the dark indigo surfaces only. */
-  --color-laurel: #7fc6a0;
-  --color-laurel-soft: #b5dec8;
-  --color-canvas: #f4f6fb;
+  --color-teal: #344c4b;
+  --color-turquoise: #8cbebf;
+  --color-coral: #e5765c;
+  --color-spring: #dfe0c3;
+  --color-spring-soft: #f2f2e6;
+  --color-turquoise-soft: #eaf3f3;
+  --color-coral-soft: #fcefeb;
 
-  /* Brand = crest indigo. 500 is the exact school colour. */
-  --color-brand-50: #f2f2fb;
-  --color-brand-100: #e4e4f6;
-  --color-brand-200: #c8c7ec;
-  --color-brand-300: #9c9ad6;
-  --color-brand-400: #5f5cb8;
-  --color-brand-500: #1c1a78;
-  --color-brand-600: #171563;
-  --color-brand-700: #12104f;
-  --color-brand-800: #0d0c3a;
-  --color-brand-900: #080727;
+  /* Older page code refers to these names; they map onto the console palette. */
+  --color-school-indigo: #344c4b;
+  --color-school-green: #8cbebf;
+  --color-school-sky: #8cbebf;
+  --color-mist: #eaeae5;
+  --color-laurel: #8cbebf;
+  --color-laurel-soft: #c9e0e0;
+  --color-canvas: #ffffff;
 
-  /* Sky = the book in the crest; used for highlights, links and focus. */
-  --color-sky-50: #e9f7fe;
-  --color-sky-100: #d0eefd;
-  --color-sky-500: #079bd8;
-  --color-sky-600: #067fb2;
+  /* Brand = teal. 500 is the exact palette colour. */
+  --color-brand-50: #f2f5f5;
+  --color-brand-100: #e3eaea;
+  --color-brand-200: #c5d3d2;
+  --color-brand-300: #98adac;
+  --color-brand-400: #5f7776;
+  --color-brand-500: #344c4b;
+  --color-brand-600: #2b3f3e;
+  --color-brand-700: #223231;
+  --color-brand-800: #182423;
+  --color-brand-900: #0f1716;
 
-  /* Surface / neutral: cool greys with a trace of the indigo. */
+  /* Sky = turquoise. */
+  --color-sky-50: #f1f7f7;
+  --color-sky-100: #dcecec;
+  --color-sky-500: #8cbebf;
+  --color-sky-600: #4f8c8d;
+
   --color-surface: #ffffff;
-  --color-surface-muted: #f6f7fb;
-  --color-border: #e3e6ef;
-  --color-border-strong: #cfd4e2;
-  --color-ink: #151739;
-  --color-ink-muted: #51556f;
-  --color-ink-subtle: #868aa3;
+  --color-surface-muted: #f6f6f3;
+  --color-border: #eaeae5;
+  --color-border-strong: #d9dad2;
+  --color-ink: #161c1c;
+  --color-ink-muted: #5b6463;
+  --color-ink-subtle: #959c9a;
 
-  /* Status. Success is the school green. */
-  --color-success-50: #e9f4ee;
-  --color-success-500: #1d7a4f;
-  --color-success-600: #17633f;
-  --color-warning-50: #fdf4e6;
-  --color-warning-500: #c27a14;
-  --color-warning-600: #93590b;
-  --color-danger-50: #fcefee;
-  --color-danger-500: #c0362c;
-  --color-danger-600: #9b2a21;
-  --color-info-50: #e9f7fe;
-  --color-info-500: #079bd8;
-  --color-info-600: #067fb2;
+  --color-success-50: #eef5f3;
+  --color-success-500: #3f7a6c;
+  --color-success-600: #2f6155;
+  --color-warning-50: #f4f4e8;
+  --color-warning-500: #a89236;
+  --color-warning-600: #7d6c22;
+  --color-danger-50: #fcefeb;
+  --color-danger-500: #e5765c;
+  --color-danger-600: #b8533d;
+  --color-info-50: #f1f7f7;
+  --color-info-500: #8cbebf;
+  --color-info-600: #4f8c8d;
 
-  /* Stat-card icon accents, kept inside the school palette. */
-  --color-accent-blue: #1c1a78;
-  --color-accent-purple: #079bd8;
-  --color-accent-red: #c0362c;
-  --color-accent-orange: #c27a14;
+  --color-accent-blue: #344c4b;
+  --color-accent-purple: #4f8c8d;
+  --color-accent-red: #e5765c;
+  --color-accent-orange: #a89236;
 
-  /* Chart marks: lighter steps of the school hues (validated for contrast + CVD). */
-  --color-chart-indigo: #4a40b5;
-  --color-chart-green: #2e8b63;
-  --color-chart-sky: #079bd8;
+  --color-chart-indigo: #344c4b;
+  --color-chart-green: #8cbebf;
+  --color-chart-sky: #8cbebf;
+  --color-chart-coral: #e5765c;
+  --color-chart-spring: #dfe0c3;
 
-  --radius-card: 0.875rem;
-  --shadow-card: 0 1px 2px rgba(21, 23, 57, 0.04), 0 1px 3px rgba(21, 23, 57, 0.05);
-  --shadow-raised: 0 4px 12px -2px rgba(21, 23, 57, 0.08), 0 2px 4px -2px rgba(21, 23, 57, 0.05);
+  --radius-card: 0.625rem;
+  --shadow-card: none;
+  --shadow-raised: 0 8px 24px -8px rgba(22, 28, 28, 0.12);
 
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-surface: #15163a;
-    --color-surface-muted: #1c1d47;
-    --color-canvas: #0f1030;
-    --color-border: #2a2c5c;
-    --color-border-strong: #3a3d72;
-    --color-ink: #f1f2fb;
-    --color-ink-muted: #b4b6d2;
-    --color-ink-subtle: #8487aa;
-    --color-brand-50: #22235a;
-    --color-brand-100: #2b2d6b;
-  }
-}
-
-:root[data-theme="dark"] {
-  --color-surface: #15163a;
-  --color-surface-muted: #1c1d47;
-  --color-canvas: #0f1030;
-  --color-border: #2a2c5c;
-  --color-border-strong: #3a3d72;
-  --color-ink: #f1f2fb;
-  --color-ink-muted: #b4b6d2;
-  --color-ink-subtle: #8487aa;
-  --color-brand-50: #22235a;
-  --color-brand-100: #2b2d6b;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html,
@@ -111,11 +94,11 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 14px;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
 }
 
-/* In the base layer so border-color utilities (active tabs, border-transparent, …) can override it. */
 @layer base {
   *,
   ::before,
@@ -142,7 +125,7 @@ body {
   }
 }
 
-/* The crest ribbon: indigo ring, sky book, laurel green. */
+/* Palette ribbon: teal, turquoise, coral. */
 .brand-ribbon {
-  background: linear-gradient(90deg, var(--color-school-indigo) 0%, var(--color-school-indigo) 45%, var(--color-school-sky) 45%, var(--color-school-sky) 72%, var(--color-school-green) 72%);
+  background: linear-gradient(90deg, var(--color-teal) 0%, var(--color-teal) 50%, var(--color-turquoise) 50%, var(--color-turquoise) 80%, var(--color-coral) 80%);
 }

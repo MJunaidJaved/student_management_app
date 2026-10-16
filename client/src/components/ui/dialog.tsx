@@ -37,16 +37,16 @@ export function Dialog({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-brand-900/45 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div className="fixed inset-0 bg-ink/30" onClick={onClose} aria-hidden />
       <div
         className={cn(
-          'relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-2xl border border-border bg-surface shadow-2xl',
+          'relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-xl border border-border bg-surface shadow-[var(--shadow-raised)]',
           sizeClass,
         )}
       >
         <div className="flex items-start justify-between border-b border-border px-5 py-4">
           <div>
-            <h2 className="text-[17px] font-bold text-ink">{title}</h2>
+            <h2 className="text-[15px] font-medium text-ink">{title}</h2>
             {description && <p className="mt-0.5 text-sm text-ink-muted">{description}</p>}
           </div>
           <button onClick={onClose} className="rounded-md p-1 text-ink-muted hover:bg-surface-muted">

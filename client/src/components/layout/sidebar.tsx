@@ -84,7 +84,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
         {year.data && (
           <div className="shrink-0 border-t border-border p-4">
-            <div className="flex items-center gap-3 rounded-xl bg-surface-muted px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-xl bg-spring-soft px-3 py-2.5">
               <div className="flex size-8 items-center justify-center rounded-lg bg-brand-500 text-white">
                 <CalendarRange className="size-4" />
               </div>
