@@ -125,7 +125,3 @@ body {
   }
 }
 
-/* Palette ribbon: teal, turquoise, coral. */
-.brand-ribbon {
-  background: linear-gradient(90deg, var(--color-teal) 0%, var(--color-teal) 50%, var(--color-turquoise) 50%, var(--color-turquoise) 80%, var(--color-coral) 80%);
-}

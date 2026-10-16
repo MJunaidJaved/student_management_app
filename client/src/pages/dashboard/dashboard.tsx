@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Users, UserCog, Wallet, AlertCircle, CalendarCheck, Receipt, UserPlus } from 'lucide-react'
-import { SchoolLogo } from '@/components/school-logo'
-import { SCHOOL } from '@/lib/school'
+import { PageHeader } from '@/components/ui/page-header'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PageLoading, EmptyState } from '@/components/ui/feedback'
@@ -25,16 +24,10 @@ function money(v: string | number): string {
   return `Rs ${Number(v).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`
 }
 
-function greeting(hour: number): string {
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function DashboardPage() {
-  const { hasPermission, me } = useAuth()
+  const { hasPermission } = useAuth()
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
@@ -77,34 +70,20 @@ export function DashboardPage() {
 
   return (
     <div>
-      <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 px-6 py-6 text-white shadow-[var(--shadow-raised)] sm:px-8 sm:py-7">
-        <div className="pointer-events-none absolute -right-10 -top-10 size-64 rounded-full bg-white opacity-[0.06]" />
-        <div className="pointer-events-none absolute -right-2 top-1/2 hidden size-44 -translate-y-1/2 overflow-hidden rounded-full opacity-[0.14] md:block">
-          <SchoolLogo className="size-full grayscale" />
-        </div>
-        <div className="relative max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-100/80">{SCHOOL.name}</p>
-          <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight">
-            {greeting(now.getHours())}, {me?.user.username ?? ''}
-          </h1>
-          <p className="mt-1 text-sm text-brand-200">
-            {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {quickActions.map((a) => (
-              <Link
-                key={a.to}
-                to={a.to}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-white/10 px-3.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/20"
-              >
-                <a.icon className="size-4 text-sky-100" />
-                {a.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="brand-ribbon absolute inset-x-0 bottom-0 h-1" />
-      </section>
+      <PageHeader
+        title="Dashboard"
+        description={now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        actions={quickActions.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-border-strong bg-surface px-3.5 text-[13px] font-medium text-ink transition-colors hover:bg-surface-muted"
+          >
+            <a.icon className="size-4 text-ink-muted" />
+            {a.label}
+          </Link>
+        ))}
+      />
 
       {!anyCardVisible && (
         <EmptyState

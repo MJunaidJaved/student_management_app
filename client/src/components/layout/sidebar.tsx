@@ -18,14 +18,14 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-30 bg-brand-900/40 backdrop-blur-[1px] lg:hidden" onClick={onClose} aria-hidden />}
+      {open && <div className="fixed inset-0 z-30 bg-ink/20 lg:hidden" onClick={onClose} aria-hidden />}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex min-h-16 shrink-0 items-center gap-3 px-5 py-3">
+        <div className="flex min-h-16 shrink-0 items-center gap-3 border-b border-border px-5 py-3">
           <SchoolLogo className="size-10 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-bold leading-[1.2] text-brand-500">{SCHOOL.name}</p>
@@ -35,7 +35,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             <X className="size-5" />
           </button>
         </div>
-        <div className="brand-ribbon mx-5 h-[3px] rounded-full opacity-90" />
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4 pt-5">
           {NAV_GROUPS.map((group, gi) => {
@@ -71,7 +70,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                             )}
                           />
                           <span className="truncate">{item.label}</span>
-                          {isActive && <span className="ml-auto size-1.5 rounded-full bg-school-sky" />}
                         </>
                       )}
                     </NavLink>

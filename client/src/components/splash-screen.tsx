@@ -23,7 +23,7 @@ function SplashScreen({ leaving }: { leaving: boolean }) {
         <SchoolLogo className="size-[132px] rounded-full" />
         <h1 className="mt-5 text-2xl font-semibold tracking-tight text-school-indigo">{SCHOOL.name}</h1>
         <p className="mt-1 text-sm text-ink-muted">{SCHOOL.location}</p>
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-school-green">{SCHOOL.motto}</p>
+        <p className="mt-4 text-[13px] text-ink-subtle">{SCHOOL.motto}</p>
       </div>
       <div className="mt-10 h-[3px] w-40 overflow-hidden rounded-full bg-mist">
         <div className="h-full w-2/5 rounded-full bg-school-green" style={{ animation: 'splash-progress 1.1s ease-in-out infinite' }} />

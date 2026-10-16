@@ -12,7 +12,7 @@ const iconTone: Record<Accent, string> = {
   success: 'text-success-500',
 }
 
-/** A quiet number tile: muted block, large figure, small label. */
+/** Number tile: muted block, large figure, small label. */
 export function StatCard({
   label,
   value,
